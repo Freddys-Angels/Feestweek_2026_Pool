@@ -128,6 +128,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .kl-tabel td{padding:9px 10px;font-size:13px;text-align:center;border-bottom:1px solid var(--bg2);font-family:'DM Mono',monospace;color:var(--text2);}
 .kl-tabel td:first-child{text-align:left;font-family:'Lato',sans-serif;font-weight:700;color:var(--text);}
 .kl-tabel td.totaal{font-weight:700;color:var(--green);font-size:15px;}
+.kl-tabel tr.kl-jij td{background:var(--green3);font-weight:700;}
+.kl-rank{font-weight:700;color:var(--gold);}
 .leaderboard-note{font-size:12px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:14px;line-height:1.6;}
 
 /* TOAST */
@@ -259,11 +261,11 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       </div>
       <table class="kl-tabel">
         <thead>
-          <tr><th>Naam</th><th>Spel 1</th><th>Spel 2</th><th>Spel 3</th><th>Spel 4</th><th>Spel 5</th><th>Bonus</th><th>Totaal</th></tr>
+          <tr><th>#</th><th>Naam</th><th>Spel 1</th><th>Spel 2</th><th>Spel 3</th><th>Spel 4</th><th>Spel 5</th><th>Bonus</th><th>Totaal</th></tr>
         </thead>
-        <tbody id="ov-tbody"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+        <tbody id="ov-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
       </table>
-      <div class="leaderboard-note">Dit overzicht toont vooralsnog alleen jouw eigen punten. De volledige gecombineerde ranglijst met alle deelnemers verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
+      <div class="leaderboard-note" id="ov-note" style="display:none">Dit overzicht toont vooralsnog alleen jouw eigen punten (nog niet gepubliceerd). De volledige gecombineerde ranglijst verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
     </section>
 
   </div>
@@ -615,7 +617,44 @@ function berekenEigenPunten(){
   return { perSpel, bonusPunten };
 }
 
-function renderOverzicht(){
+async function haalGepubliceerdeStand(){
+  try{
+    const res = await fetch(`${SB_URL}/rest/v1/admin_data?select=data&id=eq.singleton`, { headers: hdrs(false) });
+    const arr = await res.json();
+    return arr[0]?.data?.leaderboard || null;
+  }catch(e){
+    return null;
+  }
+}
+
+async function renderOverzicht(){
+  const leaderboard = await haalGepubliceerdeStand();
+  const tbody = document.getElementById('ov-tbody');
+  const note = document.getElementById('ov-note');
+
+  if(leaderboard && leaderboard.rijen?.length){
+    // Volledige, door de admin gepubliceerde ranglijst tonen (heren+dames gecombineerd).
+    note.style.display = 'none';
+    const eigenRij = leaderboard.rijen.find(r=>r.deelnemer_id === sessie.user.id);
+
+    document.getElementById('ov-naam').textContent = eigenRij?.naam || deelnemer?.naam || sessie?.user?.email || '—';
+    document.getElementById('ov-team').textContent = deelnemer?.team_id ? teamNaam(deelnemer.team_id) : 'Geen team gekoppeld';
+    document.getElementById('ov-totaal').textContent = eigenRij?.totaal ?? 0;
+
+    const spelIds = leaderboard.spellen.map(s=>s.id);
+    tbody.innerHTML = leaderboard.rijen.map((r,i)=>`
+      <tr class="${r.deelnemer_id===sessie.user.id ? 'kl-jij' : ''}">
+        <td class="kl-rank">${i+1}</td>
+        <td>${r.naam}</td>
+        ${spelIds.map(id=>`<td>${r.per_spel[id]||0}</td>`).join('')}
+        <td>${r.bonus_punten}</td>
+        <td class="totaal">${r.totaal}</td>
+      </tr>`).join('');
+    return;
+  }
+
+  // Nog geen gepubliceerde stand: toon alleen de eigen (client-side berekende) score.
+  note.style.display = 'block';
   const { perSpel, bonusPunten } = berekenEigenPunten();
   const spelPunten = spellen.map(s=>perSpel[s.id]||0);
   const totaal = spelPunten.reduce((a,b)=>a+b,0) + bonusPunten;
@@ -624,14 +663,13 @@ function renderOverzicht(){
   document.getElementById('ov-team').textContent = deelnemer?.team_id ? teamNaam(deelnemer.team_id) : 'Geen team gekoppeld';
   document.getElementById('ov-totaal').textContent = totaal;
 
-  const tbody = document.getElementById('ov-tbody');
-  const rij = `<tr>
+  tbody.innerHTML = `<tr class="kl-jij">
+    <td class="kl-rank">—</td>
     <td>${deelnemer?.naam || 'Jij'}</td>
     ${[0,1,2,3,4].map(i=>`<td>${spelPunten[i]!==undefined?spelPunten[i]:'—'}</td>`).join('')}
     <td>${bonusPunten}</td>
     <td class="totaal">${totaal}</td>
   </tr>`;
-  tbody.innerHTML = rij;
 }
 
 // ── OPSTARTEN ──
