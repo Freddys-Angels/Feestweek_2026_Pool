@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231A5C1E'/%3E%3Ctext y='82' x='50' text-anchor='middle' font-size='85' fill='%23CC0000'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freddy's Angels — Feestweek 2026 Pool</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Rye&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F5F0E8;--bg2:#EDE8DB;--bg3:#F9F6F0;
+  --green:#1A5C1E;--green2:#2E8B35;--green3:#EDF4E1;
+  --gold:#8B6914;--gold2:#C9A84C;--gold3:#FFF8E7;--gold4:#F0CC6E;
+  --red:#B91C1C;--red2:#DC2626;
+  --text:#1C1C1C;--text2:#4A4A4A;--muted:#7A7A6A;
+  --border:#D4C9A8;--border2:#B8A87A;
+  --white:#FFFFFF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-size:15px;min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--green);border-bottom:3px solid var(--gold2);box-shadow:0 2px 12px rgba(0,0,0,.2);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
+.hdr h1{font-family:'Rye',cursive;font-size:17px;letter-spacing:1.2px;color:var(--gold4);}
+.hdr h1 em{font-style:normal;color:#F5F0E8;}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.hdr-naam{font-size:12px;color:rgba(240,204,110,.8);font-style:italic;}
+.hdr-uitloggen{background:none;border:1px solid rgba(240,204,110,.4);color:var(--gold4);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;}
+.hdr-uitloggen:hover{background:rgba(240,204,110,.15);}
+
+/* TABS */
+.tabs{display:flex;background:var(--green);border-bottom:2px solid var(--gold2);padding:0 20px;overflow-x:auto;scrollbar-width:none;position:sticky;top:64px;z-index:99;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:11px 14px;font-size:13px;font-family:'Lato',sans-serif;font-weight:700;color:rgba(240,204,110,.6);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:color .2s;letter-spacing:.3px;}
+.tab:hover{color:var(--gold4);}
+.tab.active{color:var(--gold4);border-bottom-color:var(--gold2);}
+
+/* CONTENT */
+.content{max-width:900px;margin:0 auto;padding:24px 20px 60px;}
+.section{display:none;}
+.section.active{display:block;}
+.sec-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--green);margin-bottom:4px;}
+.sec-title::before{content:'★ ';color:var(--red);font-size:15px;}
+.sec-sub{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.7;}
+
+/* GATE */
+.gate-wrap{display:flex;align-items:center;justify-content:center;min-height:92vh;padding:20px;background:var(--bg);}
+.gate{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:32px 28px;max-width:440px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.gate-logo-txt{font-family:'Rye',cursive;font-size:26px;color:var(--green);text-align:center;margin-bottom:2px;}
+.gate-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;text-align:center;margin-bottom:20px;}
+.gate h2{font-family:'Playfair Display',serif;font-size:19px;font-weight:900;color:var(--text);margin-bottom:6px;text-align:center;}
+.gate-tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:1px solid var(--border);}
+.gate-tab{flex:1;text-align:center;padding:9px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.gate-tab.active{color:var(--green);border-bottom-color:var(--green);}
+.gate-field{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:11px 14px;border-radius:6px;font-family:'Lato',sans-serif;font-size:15px;margin-bottom:8px;transition:border-color .15s;}
+.gate-field:focus{outline:none;border-color:var(--green);background:var(--white);}
+.gate-field::placeholder{color:var(--muted);}
+.err{color:var(--red2);font-size:12px;margin:2px 0 6px;min-height:16px;}
+.gate-link{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;cursor:pointer;text-decoration:underline;}
+.gate-msg{font-size:12px;color:var(--green);background:var(--green3);border:1px solid var(--green2);border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6;}
+
+/* COMBOBOX (zoekbare team-select) */
+.combo{position:relative;margin-bottom:8px;}
+.combo-input{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:11px 14px;border-radius:6px;font-family:'Lato',sans-serif;font-size:14px;}
+.combo-input:focus{outline:none;border-color:var(--green);background:var(--white);}
+.combo-list{position:absolute;top:calc(100% + 3px);left:0;right:0;background:var(--white);border:1px solid var(--border2);border-radius:8px;max-height:240px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:50;display:none;}
+.combo-list.open{display:block;}
+.combo-group{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gold);background:var(--gold3);padding:6px 12px;position:sticky;top:0;}
+.combo-opt{padding:8px 14px;font-size:13px;cursor:pointer;color:var(--text2);}
+.combo-opt:hover,.combo-opt.hi{background:var(--green3);color:var(--green);}
+.combo-opt.geen{font-style:italic;color:var(--muted);}
+
+/* BUTTONS */
+.btn{background:var(--green);color:#F0CC6E;border:none;padding:10px 22px;border-radius:6px;font-family:'Lato',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;letter-spacing:.3px;}
+.btn:hover{background:var(--green2);color:#FFF8D0;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-full{width:100%;padding:13px;}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
+.btn-outline:hover{border-color:var(--green);color:var(--green);background:var(--green3);}
+.btn-gold{background:var(--gold2);color:var(--white);border:none;}
+.btn-gold:hover{background:#b8922e;color:var(--white);}
+.btn-sm{padding:7px 14px;font-size:12px;}
+
+/* VOORBLAD */
+.vb-wrap{max-width:660px;margin:0 auto;}
+.vb-hero{text-align:center;margin-bottom:20px;}
+.vb-hero h2{font-family:'Rye',cursive;font-size:26px;color:var(--green);}
+.vb-hero .sub{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:6px 0 12px;}
+.vb-hero p{font-size:14px;color:var(--text2);line-height:1.7;}
+.vb-box{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.vb-box h3{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:var(--green);margin-bottom:10px;border-bottom:1px solid var(--bg2);padding-bottom:7px;}
+.vb-box h3::before{content:'★ ';color:var(--red);font-size:13px;}
+.vb-rule{font-size:13px;color:var(--text2);line-height:1.8;padding:4px 0;display:flex;gap:8px;}
+.vb-rule::before{content:'•';color:var(--green);font-weight:700;flex-shrink:0;}
+
+/* SPEL CARDS */
+.spel-card{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.spel-header{background:var(--green);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.spel-naam{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:var(--gold4);}
+.spel-deadline{font-size:11px;color:rgba(240,204,110,.75);font-family:'DM Mono',monospace;}
+.spel-deadline.verstreken{color:#FCA5A5;}
+.spel-body{padding:16px 18px;}
+.cat-blok{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bg2);}
+.cat-blok:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0;}
+.cat-titel{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.cat-titel strong{font-size:13px;color:var(--text);text-transform:uppercase;letter-spacing:.5px;}
+.joker-toggle{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border:1px solid var(--border2);padding:4px 10px;border-radius:14px;background:var(--bg3);transition:all .15s;}
+.joker-toggle.aan{background:var(--gold2);color:var(--white);border-color:var(--gold2);}
+.joker-toggle:disabled,.joker-toggle.uitgeschakeld{opacity:.4;cursor:not-allowed;}
+.top3-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.top3-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+.top3-select{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:8px 8px;border-radius:6px;font-family:'Lato',sans-serif;font-size:13px;}
+.top3-select:focus{outline:none;border-color:var(--green);}
+.spel-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
+.spel-locked-msg{font-size:12px;color:var(--red2);background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;margin-top:6px;}
+
+/* OVERZICHT */
+.kl-eigen{background:var(--green);color:var(--gold4);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.kl-eigen-naam{font-size:17px;font-weight:700;color:var(--gold4);}
+.kl-eigen-sub{font-size:12px;color:rgba(240,204,110,.7);margin-top:2px;}
+.kl-eigen-punten{font-family:'DM Mono',monospace;font-size:30px;font-weight:700;color:var(--gold4);margin-left:auto;}
+.kl-tabel{width:100%;border-collapse:collapse;background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.kl-tabel thead th{background:var(--green);color:var(--gold4);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px 10px;text-align:center;}
+.kl-tabel thead th:first-child{text-align:left;}
+.kl-tabel td{padding:9px 10px;font-size:13px;text-align:center;border-bottom:1px solid var(--bg2);font-family:'DM Mono',monospace;color:var(--text2);}
+.kl-tabel td:first-child{text-align:left;font-family:'Lato',sans-serif;font-weight:700;color:var(--text);}
+.kl-tabel td.totaal{font-weight:700;color:var(--green);font-size:15px;}
+.leaderboard-note{font-size:12px;color:var(--muted);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-top:14px;line-height:1.6;}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:var(--gold4);padding:10px 18px;border-radius:6px;font-size:13px;font-weight:700;transform:translateY(60px);opacity:0;transition:all .3s ease;z-index:999;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.err{background:var(--red);color:var(--white);}
+
+.loading{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
+@media(max-width:560px){.top3-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<!-- GATE (login/registratie) -->
+<div id="gate-wrap" class="gate-wrap">
+  <div class="gate">
+    <div class="gate-logo-txt">Freddy's Angels</div>
+    <div class="gate-sub">★ Feestweek 2026 Pool ★</div>
+
+    <div class="gate-tabs">
+      <div class="gate-tab active" data-gtab="login" onclick="wisselGateTab('login')">Inloggen</div>
+      <div class="gate-tab" data-gtab="registreren" onclick="wisselGateTab('registreren')">Registreren</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="gtab-login">
+      <h2>Welkom terug</h2>
+      <input type="email" class="gate-field" id="login-email" placeholder="E-mailadres" autocomplete="username">
+      <input type="password" class="gate-field" id="login-ww" placeholder="Wachtwoord" autocomplete="current-password" onkeydown="if(event.key==='Enter')doeLogin()">
+      <div class="err" id="login-err"></div>
+      <button class="btn btn-full btn-gold" onclick="doeLogin()" id="login-btn">Inloggen</button>
+      <div class="gate-link" onclick="wisselGateTab('reset')">Wachtwoord vergeten?</div>
+    </div>
+
+    <!-- REGISTREREN -->
+    <div id="gtab-registreren" style="display:none">
+      <h2>Nieuw account</h2>
+      <input type="text" class="gate-field" id="reg-naam" placeholder="Je naam">
+      <input type="email" class="gate-field" id="reg-email" placeholder="E-mailadres" autocomplete="username">
+      <input type="password" class="gate-field" id="reg-ww" placeholder="Wachtwoord (min. 6 tekens)" autocomplete="new-password">
+      <div class="combo" id="reg-team-combo">
+        <input type="text" class="combo-input" id="reg-team-input" placeholder="Zoek je Feestweek-team... (optioneel)" autocomplete="off">
+        <div class="combo-list" id="reg-team-list"></div>
+      </div>
+      <div class="err" id="reg-err"></div>
+      <button class="btn btn-full btn-gold" onclick="doeRegistreren()" id="reg-btn">Account aanmaken</button>
+    </div>
+
+    <!-- WACHTWOORD RESET -->
+    <div id="gtab-reset" style="display:none">
+      <h2>Wachtwoord resetten</h2>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6">Vul je e-mailadres in, dan sturen we een resetlink.</p>
+      <input type="email" class="gate-field" id="reset-email" placeholder="E-mailadres">
+      <div class="err" id="reset-err"></div>
+      <div class="gate-msg" id="reset-msg" style="display:none"></div>
+      <button class="btn btn-full btn-gold" onclick="doeResetAanvraag()">Verstuur resetlink</button>
+      <div class="gate-link" onclick="wisselGateTab('login')">← Terug naar inloggen</div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <header class="hdr">
+    <h1>Freddy's Angels <em>— Feestweek 2026</em></h1>
+    <div class="hdr-right">
+      <span class="hdr-naam" id="hdr-naam"></span>
+      <button class="hdr-uitloggen" onclick="doeUitloggen()">Uitloggen</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab active" data-tab="voorblad" onclick="wisselTab(this)">🏠 Voorblad</div>
+    <div class="tab" data-tab="voorspellingen" onclick="wisselTab(this)">🎯 Voorspellingen</div>
+    <div class="tab" data-tab="bonus" onclick="wisselTab(this)">⭐ Bonusvragen</div>
+    <div class="tab" data-tab="overzicht" onclick="wisselTab(this)">✅ Overzicht</div>
+  </nav>
+
+  <div class="content">
+
+    <!-- VOORBLAD -->
+    <section class="section active" id="sectie-voorblad">
+      <div class="vb-wrap">
+        <div class="vb-hero">
+          <h2>Freddy's Angels</h2>
+          <div class="sub">★ Feestweek 2026 Pool ★ &nbsp;·&nbsp; 7–11 september</div>
+          <p>Welkom bij de Freddy's Angels Feestweek Pool! Voorspel elke dag de top 3 van heren én dames en verzamel punten voor de gecombineerde eindstand.</p>
+        </div>
+        <div class="vb-box">
+          <h3>Puntensysteem</h3>
+          <div class="vb-rule">Team correct in top 3 (ongeacht positie): <strong>10&nbsp;pt</strong></div>
+          <div class="vb-rule">Exact op #1 voorspeld: <strong>+5&nbsp;pt</strong> bonus</div>
+          <div class="vb-rule">Exact op #2 voorspeld: <strong>+3&nbsp;pt</strong> bonus</div>
+          <div class="vb-rule">Exact op #3 voorspeld: <strong>+2&nbsp;pt</strong> bonus</div>
+          <div class="vb-rule">Joker: 1x per categorie (heren/dames) verdubbelt de spelpunten van die dag (niet de bonusvragen)</div>
+        </div>
+        <div class="vb-box">
+          <h3>Belangrijk</h3>
+          <div class="vb-rule">Elke dag sluit de inzending op een vast tijdstip — daarna kun je niet meer wijzigen</div>
+          <div class="vb-rule">Eén gecombineerde eindstand voor heren + dames samen</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VOORSPELLINGEN -->
+    <section class="section" id="sectie-voorspellingen">
+      <div class="sec-title">Voorspellingen</div>
+      <div class="sec-sub">Vul per spel je verwachte top 3 in voor heren én dames. Elk spel heeft een eigen sluitingstijd.</div>
+      <div id="spellen-lijst"><div class="loading">Spellen laden...</div></div>
+    </section>
+
+    <!-- BONUSVRAGEN -->
+    <section class="section" id="sectie-bonus">
+      <div class="sec-title">Bonusvragen</div>
+      <div class="sec-sub">Het weekthema en de bonusvragen worden later toegevoegd.</div>
+      <div id="bonus-lijst"><div class="loading">Nog geen bonusvragen beschikbaar.</div></div>
+    </section>
+
+    <!-- OVERZICHT -->
+    <section class="section" id="sectie-overzicht">
+      <div class="sec-title">Overzicht</div>
+      <div class="sec-sub">Jouw punten per spel en het totaal.</div>
+      <div class="kl-eigen">
+        <div>
+          <div class="kl-eigen-naam" id="ov-naam">—</div>
+          <div class="kl-eigen-sub" id="ov-team">Geen team gekoppeld</div>
+        </div>
+        <div class="kl-eigen-punten" id="ov-totaal">0</div>
+      </div>
+      <table class="kl-tabel">
+        <thead>
+          <tr><th>Naam</th><th>Spel 1</th><th>Spel 2</th><th>Spel 3</th><th>Spel 4</th><th>Spel 5</th><th>Bonus</th><th>Totaal</th></tr>
+        </thead>
+        <tbody id="ov-tbody"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+      </table>
+      <div class="leaderboard-note">Dit overzicht toont vooralsnog alleen jouw eigen punten. De volledige gecombineerde ranglijst met alle deelnemers verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
+    </section>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ──
+const SB_URL = 'https://hetcbiybjdsjkusrqocl.supabase.co';
+const SB_KEY = 'sb_publishable_2N32AX3p9QMcsP00ASwdJg_Yn_X-qLo';
+
+let sessie = null;       // { access_token, refresh_token, user }
+let teams = [];          // alle teams (heren+dames)
+let spellen = [];        // alle spellen
+let uitslagen = [];      // alle officiele uitslagen
+let bonusvragen = [];    // bonusvragen (later)
+let deelnemer = null;    // eigen profiel uit 'deelnemers'
+let voorspelling = null; // eigen rij uit 'voorspellingen'
+let gekozenTeamId = null; // tijdens registratie geselecteerd team
+
+function hdrs(metAuth){
+  const h = { 'apikey': SB_KEY, 'Content-Type': 'application/json' };
+  h['Authorization'] = metAuth && sessie ? `Bearer ${sessie.access_token}` : `Bearer ${SB_KEY}`;
+  return h;
+}
+
+function toonToast(msg, isErr){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  setTimeout(()=>{ t.className='toast'; }, 3200);
+}
+
+// ── GATE TABS ──
+function wisselGateTab(naam){
+  document.querySelectorAll('.gate-tab').forEach(t=>t.classList.toggle('active', t.dataset.gtab===naam));
+  document.getElementById('gtab-login').style.display = naam==='login' ? 'block':'none';
+  document.getElementById('gtab-registreren').style.display = naam==='registreren' ? 'block':'none';
+  document.getElementById('gtab-reset').style.display = naam==='reset' ? 'block':'none';
+}
+
+// ── ZOEKBARE TEAM-COMBOBOX (registratie) ──
+function renderTeamCombo(){
+  const list = document.getElementById('reg-team-list');
+  const input = document.getElementById('reg-team-input');
+  const zoek = input.value.trim().toLowerCase();
+
+  const heren = teams.filter(t=>t.categorie==='heren' && t.naam.toLowerCase().includes(zoek));
+  const dames = teams.filter(t=>t.categorie==='dames' && t.naam.toLowerCase().includes(zoek));
+
+  let html = `<div class="combo-opt geen" data-id="">— Geen team —</div>`;
+  if(heren.length){
+    html += `<div class="combo-group">Heren</div>`;
+    html += heren.map(t=>`<div class="combo-opt" data-id="${t.id}">${t.naam}</div>`).join('');
+  }
+  if(dames.length){
+    html += `<div class="combo-group">Dames</div>`;
+    html += dames.map(t=>`<div class="combo-opt" data-id="${t.id}">${t.naam}</div>`).join('');
+  }
+  if(!heren.length && !dames.length){
+    html += `<div class="combo-opt" style="color:var(--muted)">Geen teams gevonden</div>`;
+  }
+  list.innerHTML = html;
+  list.querySelectorAll('.combo-opt[data-id]').forEach(el=>{
+    el.onclick = ()=>{
+      gekozenTeamId = el.dataset.id || null;
+      input.value = el.dataset.id ? el.textContent : '';
+      list.classList.remove('open');
+    };
+  });
+}
+document.getElementById('reg-team-input').addEventListener('focus', ()=>{ renderTeamCombo(); document.getElementById('reg-team-list').classList.add('open'); });
+document.getElementById('reg-team-input').addEventListener('input', renderTeamCombo);
+document.addEventListener('click', (e)=>{
+  const combo = document.getElementById('reg-team-combo');
+  if(combo && !combo.contains(e.target)) document.getElementById('reg-team-list').classList.remove('open');
+});
+
+// ── AUTH ──
+async function doeLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const ww = document.getElementById('login-ww').value;
+  const err = document.getElementById('login-err');
+  err.textContent = '';
+  if(!email || !ww){ err.textContent = 'Vul e-mail en wachtwoord in.'; return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Bezig...';
+  try{
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method:'POST', headers: hdrs(false), body: JSON.stringify({ email, password: ww })
+    });
+    const data = await res.json();
+    if(!res.ok){ err.textContent = data.error_description || data.msg || 'Inloggen mislukt.'; return; }
+    sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
+    localStorage.setItem('fw2026_sessie', JSON.stringify(sessie));
+    await startApp();
+  }catch(e){
+    err.textContent = 'Netwerkfout, probeer opnieuw.';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Inloggen';
+  }
+}
+
+async function doeRegistreren(){
+  const naam = document.getElementById('reg-naam').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const ww = document.getElementById('reg-ww').value;
+  const err = document.getElementById('reg-err');
+  err.textContent = '';
+  if(!naam || !email || !ww){ err.textContent = 'Vul alle verplichte velden in.'; return; }
+  if(ww.length < 6){ err.textContent = 'Wachtwoord moet minimaal 6 tekens zijn.'; return; }
+
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.textContent = 'Bezig...';
+  try{
+    const res = await fetch(`${SB_URL}/auth/v1/signup`, {
+      method:'POST', headers: hdrs(false),
+      body: JSON.stringify({ email, password: ww, data: { naam, team_id: gekozenTeamId || '' } })
+    });
+    const data = await res.json();
+    if(!res.ok){ err.textContent = data.error_description || data.msg || 'Registreren mislukt.'; return; }
+
+    if(data.access_token){
+      sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
+      localStorage.setItem('fw2026_sessie', JSON.stringify(sessie));
+      await startApp();
+    } else {
+      wisselGateTab('login');
+      toonToast('Account aangemaakt! Check je e-mail om te bevestigen, log daarna in.');
+    }
+  }catch(e){
+    err.textContent = 'Netwerkfout, probeer opnieuw.';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Account aanmaken';
+  }
+}
+
+async function doeResetAanvraag(){
+  const email = document.getElementById('reset-email').value.trim();
+  const err = document.getElementById('reset-err');
+  const msg = document.getElementById('reset-msg');
+  err.textContent = ''; msg.style.display = 'none';
+  if(!email){ err.textContent = 'Vul je e-mailadres in.'; return; }
+  try{
+    await fetch(`${SB_URL}/auth/v1/recover`, {
+      method:'POST', headers: hdrs(false), body: JSON.stringify({ email })
+    });
+    msg.textContent = 'Als dit e-mailadres bekend is, is er een resetlink verstuurd.';
+    msg.style.display = 'block';
+  }catch(e){
+    err.textContent = 'Netwerkfout, probeer opnieuw.';
+  }
+}
+
+function doeUitloggen(){
+  localStorage.removeItem('fw2026_sessie');
+  sessie = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('gate-wrap').style.display = 'flex';
+}
+
+// ── TABS (app) ──
+function wisselTab(el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sectie-' + el.dataset.tab).classList.add('active');
+  if(el.dataset.tab === 'overzicht') renderOverzicht();
+}
+
+// ── DATA LADEN ──
+async function laadPubliekeData(){
+  const [teamsRes, spellenRes, uitslagenRes, bonusRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/teams?select=*&order=categorie,volgorde`, { headers: hdrs(false) }),
+    fetch(`${SB_URL}/rest/v1/spellen?select=*&order=volgorde`, { headers: hdrs(false) }),
+    fetch(`${SB_URL}/rest/v1/uitslagen?select=*`, { headers: hdrs(false) }),
+    fetch(`${SB_URL}/rest/v1/bonusvragen?select=*&order=volgorde`, { headers: hdrs(false) }),
+  ]);
+  teams = await teamsRes.json();
+  spellen = await spellenRes.json();
+  uitslagen = await uitslagenRes.json();
+  bonusvragen = await bonusRes.json();
+}
+
+async function laadEigenData(){
+  const [deelnemerRes, voorspellingRes] = await Promise.all([
+    fetch(`${SB_URL}/rest/v1/deelnemers?select=*&id=eq.${sessie.user.id}`, { headers: hdrs(true) }),
+    fetch(`${SB_URL}/rest/v1/voorspellingen?select=*&deelnemer_id=eq.${sessie.user.id}`, { headers: hdrs(true) }),
+  ]);
+  const dArr = await deelnemerRes.json();
+  const vArr = await voorspellingRes.json();
+  deelnemer = dArr[0] || null;
+  voorspelling = vArr[0] || null;
+}
+
+function teamNaam(id){
+  const t = teams.find(x=>x.id===id);
+  return t ? t.naam : '—';
+}
+
+// ── VOORSPELLINGEN RENDEREN ──
+function huidigeSelectie(spelId, categorie, positie){
+  if(!voorspelling || !voorspelling.predictions) return '';
+  const spel = voorspelling.predictions[spelId];
+  if(!spel || !spel[categorie]) return '';
+  return spel[categorie][String(positie)] || '';
+}
+
+function renderSpellen(){
+  const wrap = document.getElementById('spellen-lijst');
+  if(!spellen.length){ wrap.innerHTML = '<div class="loading">Nog geen spellen ingesteld.</div>'; return; }
+
+  wrap.innerHTML = spellen.map(spel=>{
+    const gesloten = new Date(spel.sluitingstijd).getTime() <= Date.now();
+    const deadlineTekst = new Date(spel.sluitingstijd).toLocaleString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+    const catBlok = (categorie) => {
+      const opties = teams.filter(t=>t.categorie===categorie);
+      const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+      const jokerHier = deelnemer && deelnemer[jokerKolom] === spel.id;
+      const jokerElders = deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
+
+      const selectHtml = (positie) => {
+        const huidig = huidigeSelectie(spel.id, categorie, positie);
+        return `<select class="top3-select" ${gesloten?'disabled':''} data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
+          <option value="">—</option>
+          ${opties.map(t=>`<option value="${t.id}" ${t.id===huidig?'selected':''}>${t.naam}</option>`).join('')}
+        </select>`;
+      };
+
+      return `
+        <div class="cat-blok">
+          <div class="cat-titel">
+            <strong>${categorie==='heren'?'Heren':'Dames'}</strong>
+            <button class="joker-toggle ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
+              onclick="toggleJoker('${spel.id}','${categorie}')" title="${jokerElders?'Joker al ingezet op een ander spel':'Zet joker in op dit spel (verdubbelt spelpunten)'}">
+              ${jokerHier ? '★ Joker actief' : '☆ Joker'}
+            </button>
+          </div>
+          <div class="top3-grid">
+            <div><div class="top3-pos">#1 — +5 bonus</div>${selectHtml(1)}</div>
+            <div><div class="top3-pos">#2 — +3 bonus</div>${selectHtml(2)}</div>
+            <div><div class="top3-pos">#3 — +2 bonus</div>${selectHtml(3)}</div>
+          </div>
+        </div>`;
+    };
+
+    return `
+      <div class="spel-card">
+        <div class="spel-header">
+          <span class="spel-naam">${spel.naam}</span>
+          <span class="spel-deadline ${gesloten?'verstreken':''}">${gesloten?'Gesloten sinds':'Sluit'} ${deadlineTekst}</span>
+        </div>
+        <div class="spel-body">
+          ${catBlok('heren')}
+          ${catBlok('dames')}
+          ${gesloten ? '<div class="spel-locked-msg">De inzendtermijn voor dit spel is verstreken.</div>' :
+            `<div class="spel-footer"><button class="btn btn-gold btn-sm" onclick="slaSpelOp('${spel.id}')">Opslaan</button></div>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function toggleJoker(spelId, categorie){
+  // Alleen lokaal togglen in het deelnemer-object; wordt pas bij "Opslaan" definitief via de Edge Function.
+  const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+  if(!deelnemer) return;
+  deelnemer[jokerKolom] = deelnemer[jokerKolom] === spelId ? null : spelId;
+  renderSpellen();
+}
+
+async function slaSpelOp(spelId){
+  const spel = spellen.find(s=>s.id===spelId);
+  if(!spel) return;
+
+  for(const categorie of ['heren','dames']){
+    const selects = document.querySelectorAll(`select[data-spel="${spelId}"][data-cat="${categorie}"]`);
+    const top3 = Array.from(selects).map(s=>s.value);
+    if(top3.some(v=>!v)) continue; // deze categorie nog niet (volledig) ingevuld, overslaan
+
+    const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+    const joker = deelnemer && deelnemer[jokerKolom] === spelId;
+
+    try{
+      const res = await fetch(`${SB_URL}/functions/v1/fw2026-opslaan-voorspelling`, {
+        method:'POST', headers: hdrs(true),
+        body: JSON.stringify({ spel_id: spelId, categorie, top3, joker })
+      });
+      const data = await res.json();
+      if(!data.ok){ toonToast(`${categorie}: ${data.error}`, true); return; }
+    }catch(e){
+      toonToast('Netwerkfout bij opslaan.', true); return;
+    }
+  }
+  toonToast('Voorspelling opgeslagen!');
+  await laadEigenData();
+  renderSpellen();
+}
+
+// ── BONUSVRAGEN (placeholder) ──
+function renderBonus(){
+  const wrap = document.getElementById('bonus-lijst');
+  if(!bonusvragen.length){
+    wrap.innerHTML = '<div class="loading">Nog geen bonusvragen beschikbaar. Kom later terug!</div>';
+    return;
+  }
+  wrap.innerHTML = bonusvragen.map(v=>`<div class="vb-box"><h3>${v.vraag}</h3></div>`).join('');
+}
+
+// ── PUNTENBEREKENING (eigen score) ──
+function berekenEigenPunten(){
+  const perSpel = {};
+  spellen.forEach(s=>perSpel[s.id]=0);
+  let bonusPunten = 0;
+
+  if(voorspelling && voorspelling.predictions){
+    spellen.forEach(spel=>{
+      let spelTotaal = 0;
+      ['heren','dames'].forEach(categorie=>{
+        const voorspeld = voorspelling.predictions[spel.id]?.[categorie];
+        if(!voorspeld) return;
+        const actueel = uitslagen.filter(u=>u.spel_id===spel.id && u.categorie===categorie);
+        if(!actueel.length) return;
+
+        const actueelMap = {}; actueel.forEach(u=>actueelMap[u.positie]=u.team_id);
+        const actueleTop3 = Object.values(actueelMap);
+        const bonusPerPositie = {1:5,2:3,3:2};
+
+        let catPunten = 0;
+        [1,2,3].forEach(pos=>{
+          const teamId = voorspeld[String(pos)];
+          if(!teamId) return;
+          if(actueleTop3.includes(teamId)) catPunten += 10;
+          if(actueelMap[pos] === teamId) catPunten += bonusPerPositie[pos];
+        });
+
+        const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+        const joker = deelnemer && deelnemer[jokerKolom] === spel.id;
+        // Joker verdubbelt alleen de 'aanwezig in top3'-punten + positiebonus die uit ditzelfde spel komen (spelpunten totaal), niet bonusvragen.
+        spelTotaal += joker ? catPunten * 2 : catPunten;
+      });
+      perSpel[spel.id] = spelTotaal;
+    });
+  }
+
+  // Bonusvragen-score: nog geen antwoord-mechanisme gebouwd, dus voorlopig 0.
+  return { perSpel, bonusPunten };
+}
+
+function renderOverzicht(){
+  const { perSpel, bonusPunten } = berekenEigenPunten();
+  const spelPunten = spellen.map(s=>perSpel[s.id]||0);
+  const totaal = spelPunten.reduce((a,b)=>a+b,0) + bonusPunten;
+
+  document.getElementById('ov-naam').textContent = deelnemer?.naam || sessie?.user?.email || '—';
+  document.getElementById('ov-team').textContent = deelnemer?.team_id ? teamNaam(deelnemer.team_id) : 'Geen team gekoppeld';
+  document.getElementById('ov-totaal').textContent = totaal;
+
+  const tbody = document.getElementById('ov-tbody');
+  const rij = `<tr>
+    <td>${deelnemer?.naam || 'Jij'}</td>
+    ${[0,1,2,3,4].map(i=>`<td>${spelPunten[i]!==undefined?spelPunten[i]:'—'}</td>`).join('')}
+    <td>${bonusPunten}</td>
+    <td class="totaal">${totaal}</td>
+  </tr>`;
+  tbody.innerHTML = rij;
+}
+
+// ── OPSTARTEN ──
+async function startApp(){
+  document.getElementById('gate-wrap').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await laadPubliekeData();
+  await laadEigenData();
+  document.getElementById('hdr-naam').textContent = deelnemer?.naam || sessie.user.email;
+  renderSpellen();
+  renderBonus();
+}
+
+(async function init(){
+  const opgeslagen = localStorage.getItem('fw2026_sessie');
+  if(opgeslagen){
+    try{
+      sessie = JSON.parse(opgeslagen);
+      await startApp();
+      return;
+    }catch(e){
+      localStorage.removeItem('fw2026_sessie');
+    }
+  }
+  document.getElementById('gate-wrap').style.display = 'flex';
+})();
+</script>
+</body>
+</html>
