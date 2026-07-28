@@ -1,4 +1,5 @@
 // supabase/functions/fw2026-opslaan-voorspelling/index.ts
+// deploy-trigger: secrets nu ingesteld
 //
 // Slaat een voorspelling (top 3) op voor een ingelogde deelnemer.
 // - Checkt sluitingstijd van het spel
