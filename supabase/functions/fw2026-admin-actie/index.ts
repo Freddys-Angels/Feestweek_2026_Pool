@@ -127,6 +127,19 @@ Deno.serve(async (req: Request) => {
         return jsonRespons({ ok: true });
       }
 
+      case "zet_betaald": {
+        const { id, betaald } = data as any;
+        if (!id) return jsonRespons({ ok: false, error: "id is verplicht." }, 400);
+        const { data: res, error } = await supabase
+          .from("deelnemers")
+          .update({ betaald: betaald === true })
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) return jsonRespons({ ok: false, error: error.message }, 500);
+        return jsonRespons({ ok: true, deelnemer: res });
+      }
+
       default:
         return jsonRespons({ ok: false, error: `Onbekende actie: ${actie}` }, 400);
     }
