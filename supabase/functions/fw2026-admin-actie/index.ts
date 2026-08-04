@@ -71,13 +71,28 @@ Deno.serve(async (req: Request) => {
       }
 
       case "upsert_spel": {
-        const { id, naam, volgorde, speeldatum, sluitingstijd } = data as any;
+        const { id, naam, volgorde, speeldatum, sluitingstijd, is_eindstand } = data as any;
         if (!naam || !sluitingstijd) {
           return jsonRespons({ ok: false, error: "naam en sluitingstijd zijn verplicht." }, 400);
         }
-        const rij = { naam, volgorde: volgorde ?? 0, speeldatum: speeldatum ?? null, sluitingstijd, ...(id ? { id } : {}) };
+        const rij = {
+          naam,
+          volgorde: volgorde ?? 0,
+          speeldatum: speeldatum ?? null,
+          sluitingstijd,
+          is_eindstand: is_eindstand === true,
+          ...(id ? { id } : {}),
+        };
         const { data: res, error } = await supabase.from("spellen").upsert(rij).select().single();
-        if (error) return jsonRespons({ ok: false, error: error.message }, 500);
+        if (error) {
+          if (String(error.message).includes("idx_spellen_eindstand_uniek")) {
+            return jsonRespons(
+              { ok: false, error: "Er is al een spel gemarkeerd als eindstand/supercup. Verwijder eerst die markering." },
+              400,
+            );
+          }
+          return jsonRespons({ ok: false, error: error.message }, 500);
+        }
         return jsonRespons({ ok: true, spel: res });
       }
 
