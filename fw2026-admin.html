@@ -89,6 +89,17 @@ table.beheer tr:hover td{background:var(--bg3);}
 .toast.err{background:var(--red);}
 .loading{text-align:center;color:var(--muted);padding:24px;font-size:13px;}
 .muted-small{font-size:11px;color:var(--muted);}
+
+.uitslag-catblok{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bg2);}
+.uitslag-catblok:last-of-type{border-bottom:none;margin-bottom:10px;padding-bottom:0;}
+.uitslag-cattitel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;}
+.uitslag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.uitslag-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
+.uitslag-select{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:8px;border-radius:6px;font-size:13px;}
+.uitslag-select:focus{outline:none;border-color:var(--green);}
+@media(max-width:560px){.uitslag-grid{grid-template-columns:1fr;}}
+.eindstand-kaart{border:2px solid var(--gold2);box-shadow:0 2px 12px rgba(201,168,76,.25);}
+.eindstand-kaart h3{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -383,19 +394,21 @@ function renderUitslagen(){
   wrap.innerHTML = spellen.map(spel=>{
     const catBlok = (categorie) => {
       const opties = teams.filter(t=>t.categorie===categorie);
-      const selectHtml = (pos) => `<select data-spel="${spel.id}" data-cat="${categorie}" data-pos="${pos}" style="padding:7px;border:1px solid var(--border2);border-radius:6px;font-size:13px;min-width:140px">
+      const selectHtml = (pos) => `<select class="uitslag-select" data-spel="${spel.id}" data-cat="${categorie}" data-pos="${pos}">
         <option value="">—</option>
         ${opties.map(t=>`<option value="${t.id}" ${t.id===huidigeUitslag(spel.id,categorie,pos)?'selected':''}>${t.naam}</option>`).join('')}
       </select>`;
-      return `<div style="margin-bottom:10px">
-        <div class="muted-small" style="margin-bottom:4px;text-transform:uppercase;font-weight:700">${categorie}</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <div>#1: ${selectHtml(1)}</div><div>#2: ${selectHtml(2)}</div><div>#3: ${selectHtml(3)}</div>
+      return `<div class="uitslag-catblok">
+        <div class="uitslag-cattitel">${categorie==='heren'?'Heren':'Dames'}</div>
+        <div class="uitslag-grid">
+          <div><div class="uitslag-pos">#1</div>${selectHtml(1)}</div>
+          <div><div class="uitslag-pos">#2</div>${selectHtml(2)}</div>
+          <div><div class="uitslag-pos">#3</div>${selectHtml(3)}</div>
         </div>
       </div>`;
     };
-    return `<div class="card">
-      <h3>${spel.naam}</h3>
+    return `<div class="card ${spel.is_eindstand?'eindstand-kaart':''}">
+      <h3>${spel.is_eindstand ? '🏆 ' : ''}${spel.naam}${spel.is_eindstand ? ' <span class="badge" style="background:var(--gold3);color:var(--gold)">Supercup · 2x</span>' : ''}</h3>
       ${catBlok('heren')}
       ${catBlok('dames')}
       <button class="btn btn-gold btn-sm" onclick="slaUitslagOp('${spel.id}')">Opslaan</button>
