@@ -207,6 +207,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
   <nav class="tabs">
     <div class="tab active" data-tab="voorblad" onclick="wisselTab(this)">🏠 Voorblad</div>
     <div class="tab" data-tab="voorspellingen" onclick="wisselTab(this)">🎯 Voorspellingen</div>
+    <div class="tab" data-tab="supercup" onclick="wisselTab(this)">🏆 Supercup</div>
     <div class="tab" data-tab="bonus" onclick="wisselTab(this)">⭐ Bonusvragen</div>
     <div class="tab" data-tab="overzicht" onclick="wisselTab(this)">✅ Overzicht</div>
   </nav>
@@ -242,6 +243,13 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <div class="sec-title">Voorspellingen</div>
       <div class="sec-sub">Vul per spel je verwachte top 3 in voor heren én dames. Elk spel heeft een eigen sluitingstijd.</div>
       <div id="spellen-lijst"><div class="loading">Spellen laden...</div></div>
+    </section>
+
+    <!-- SUPERCUP -->
+    <section class="section" id="sectie-supercup">
+      <div class="sec-title">🏆 Supercup</div>
+      <div class="sec-sub">Voorspel de uiteindelijke eindstand van de Feestweek.</div>
+      <div id="supercup-lijst"><div class="loading">Laden...</div></div>
     </section>
 
     <!-- BONUSVRAGEN -->
@@ -479,61 +487,70 @@ function huidigeSelectie(spelId, categorie, positie){
   return spel[categorie][String(positie)] || '';
 }
 
-function renderSpellen(){
-  const wrap = document.getElementById('spellen-lijst');
-  if(!spellen.length){ wrap.innerHTML = '<div class="loading">Nog geen spellen ingesteld.</div>'; return; }
+function renderSpelKaart(spel){
+  const gesloten = new Date(spel.sluitingstijd).getTime() <= Date.now();
+  const deadlineTekst = new Date(spel.sluitingstijd).toLocaleString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
 
-  wrap.innerHTML = spellen.map(spel=>{
-    const gesloten = new Date(spel.sluitingstijd).getTime() <= Date.now();
-    const deadlineTekst = new Date(spel.sluitingstijd).toLocaleString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+  const catBlok = (categorie) => {
+    const opties = teams.filter(t=>t.categorie===categorie);
+    const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+    const jokerHier = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spel.id;
+    const jokerElders = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
 
-    const catBlok = (categorie) => {
-      const opties = teams.filter(t=>t.categorie===categorie);
-      const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
-      const jokerHier = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spel.id;
-      const jokerElders = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
-
-      const selectHtml = (positie) => {
-        const huidig = huidigeSelectie(spel.id, categorie, positie);
-        return `<select class="top3-select" ${gesloten?'disabled':''} data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
-          <option value="">—</option>
-          ${opties.map(t=>`<option value="${t.id}" ${t.id===huidig?'selected':''}>${t.naam}</option>`).join('')}
-        </select>`;
-      };
-
-      return `
-        <div class="cat-blok">
-          <div class="cat-titel">
-            <strong>${categorie==='heren'?'Heren':'Dames'}</strong>
-            ${spel.is_eindstand ? '' : `
-            <button class="joker-toggle ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
-              onclick="toggleJoker('${spel.id}','${categorie}')" title="${jokerElders?'Joker al ingezet op een ander spel':'Zet joker in op dit spel (verdubbelt spelpunten)'}">
-              ${jokerHier ? '★ Joker actief' : '☆ Joker'}
-            </button>`}
-          </div>
-          <div class="top3-grid">
-            <div><div class="top3-pos">#1 — +5 bonus</div>${selectHtml(1)}</div>
-            <div><div class="top3-pos">#2 — +3 bonus</div>${selectHtml(2)}</div>
-            <div><div class="top3-pos">#3 — +2 bonus</div>${selectHtml(3)}</div>
-          </div>
-        </div>`;
+    const selectHtml = (positie) => {
+      const huidig = huidigeSelectie(spel.id, categorie, positie);
+      return `<select class="top3-select" ${gesloten?'disabled':''} data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
+        <option value="">—</option>
+        ${opties.map(t=>`<option value="${t.id}" ${t.id===huidig?'selected':''}>${t.naam}</option>`).join('')}
+      </select>`;
     };
 
     return `
-      <div class="spel-card ${spel.is_eindstand?'eindstand-card':''}">
-        <div class="spel-header">
-          <span class="spel-naam">${spel.is_eindstand ? '🏆 ' : ''}${spel.naam}</span>
-          <span class="spel-deadline ${gesloten?'verstreken':''}">${gesloten?'Gesloten sinds':'Sluit'} ${deadlineTekst}</span>
+      <div class="cat-blok">
+        <div class="cat-titel">
+          <strong>${categorie==='heren'?'Heren':'Dames'}</strong>
+          ${spel.is_eindstand ? '' : `
+          <button class="joker-toggle ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
+            onclick="toggleJoker('${spel.id}','${categorie}')" title="${jokerElders?'Joker al ingezet op een ander spel':'Zet joker in op dit spel (verdubbelt spelpunten)'}">
+            ${jokerHier ? '★ Joker actief' : '☆ Joker'}
+          </button>`}
         </div>
-        <div class="spel-body">
-          ${spel.is_eindstand ? '<div class="eindstand-note">Voorspel de uiteindelijke eindstand (top 3) van de Feestweek — deze voorspelling telt <strong>dubbel</strong> mee en is uitgesloten van de joker.</div>' : ''}
-          ${catBlok('heren')}
-          ${catBlok('dames')}
-          ${gesloten ? '<div class="spel-locked-msg">De inzendtermijn voor dit spel is verstreken.</div>' :
-            `<div class="spel-footer"><button class="btn btn-gold btn-sm" onclick="slaSpelOp('${spel.id}')">Opslaan</button></div>`}
+        <div class="top3-grid">
+          <div><div class="top3-pos">#1 — +5 bonus</div>${selectHtml(1)}</div>
+          <div><div class="top3-pos">#2 — +3 bonus</div>${selectHtml(2)}</div>
+          <div><div class="top3-pos">#3 — +2 bonus</div>${selectHtml(3)}</div>
         </div>
       </div>`;
-  }).join('');
+  };
+
+  return `
+    <div class="spel-card ${spel.is_eindstand?'eindstand-card':''}">
+      <div class="spel-header">
+        <span class="spel-naam">${spel.is_eindstand ? '🏆 ' : ''}${spel.naam}</span>
+        <span class="spel-deadline ${gesloten?'verstreken':''}">${gesloten?'Gesloten sinds':'Sluit'} ${deadlineTekst}</span>
+      </div>
+      <div class="spel-body">
+        ${spel.is_eindstand ? '<div class="eindstand-note">Voorspel de uiteindelijke eindstand (top 3) van de Feestweek — deze voorspelling telt <strong>dubbel</strong> mee en is uitgesloten van de joker.</div>' : ''}
+        ${catBlok('heren')}
+        ${catBlok('dames')}
+        ${gesloten ? '<div class="spel-locked-msg">De inzendtermijn voor dit spel is verstreken.</div>' :
+          `<div class="spel-footer"><button class="btn btn-gold btn-sm" onclick="slaSpelOp('${spel.id}')">Opslaan</button></div>`}
+      </div>
+    </div>`;
+}
+
+function renderSpellen(){
+  const wrap = document.getElementById('spellen-lijst');
+  const gewoneSpellen = spellen.filter(s=>!s.is_eindstand);
+  if(!gewoneSpellen.length){ wrap.innerHTML = '<div class="loading">Nog geen spellen ingesteld.</div>'; return; }
+  wrap.innerHTML = gewoneSpellen.map(renderSpelKaart).join('');
+}
+
+function renderSupercup(){
+  const wrap = document.getElementById('supercup-lijst');
+  const eindstandSpellen = spellen.filter(s=>s.is_eindstand);
+  if(!eindstandSpellen.length){ wrap.innerHTML = '<div class="loading">De Supercup-voorspelling is nog niet geopend. Kom later terug!</div>'; return; }
+  wrap.innerHTML = eindstandSpellen.map(renderSpelKaart).join('');
 }
 
 async function toggleJoker(spelId, categorie){
@@ -542,6 +559,7 @@ async function toggleJoker(spelId, categorie){
   if(!deelnemer) return;
   deelnemer[jokerKolom] = deelnemer[jokerKolom] === spelId ? null : spelId;
   renderSpellen();
+  renderSupercup();
 }
 
 async function slaSpelOp(spelId){
@@ -570,6 +588,7 @@ async function slaSpelOp(spelId){
   toonToast('Voorspelling opgeslagen!');
   await laadEigenData();
   renderSpellen();
+  renderSupercup();
 }
 
 // ── BONUSVRAGEN (placeholder) ──
@@ -702,6 +721,7 @@ async function startApp(){
   await laadEigenData();
   document.getElementById('hdr-naam').textContent = deelnemer?.naam || sessie.user.email;
   renderSpellen();
+  renderSupercup();
   renderBonus();
 }
 
