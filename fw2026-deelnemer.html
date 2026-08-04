@@ -116,6 +116,9 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .top3-select:focus{outline:none;border-color:var(--green);}
 .spel-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
 .spel-locked-msg{font-size:12px;color:var(--red2);background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;margin-top:6px;}
+.eindstand-card{border:2px solid var(--gold2);box-shadow:0 2px 12px rgba(201,168,76,.25);}
+.eindstand-card .spel-header{background:linear-gradient(135deg,var(--green),#123f15);}
+.eindstand-note{font-size:12px;color:var(--gold);background:var(--gold3);border:1px solid var(--gold2);border-radius:6px;padding:8px 12px;margin-bottom:14px;line-height:1.6;}
 
 /* OVERZICHT */
 .kl-eigen{background:var(--green);color:var(--gold4);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
@@ -260,10 +263,10 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
         <div class="kl-eigen-punten" id="ov-totaal">0</div>
       </div>
       <table class="kl-tabel">
-        <thead>
-          <tr><th>#</th><th>Naam</th><th>Spel 1</th><th>Spel 2</th><th>Spel 3</th><th>Spel 4</th><th>Spel 5</th><th>Bonus</th><th>Totaal</th></tr>
+        <thead id="ov-thead">
+          <tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr>
         </thead>
-        <tbody id="ov-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+        <tbody id="ov-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
       </table>
       <div class="leaderboard-note" id="ov-note" style="display:none">Dit overzicht toont vooralsnog alleen jouw eigen punten (nog niet gepubliceerd). De volledige gecombineerde ranglijst verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
     </section>
@@ -487,8 +490,8 @@ function renderSpellen(){
     const catBlok = (categorie) => {
       const opties = teams.filter(t=>t.categorie===categorie);
       const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
-      const jokerHier = deelnemer && deelnemer[jokerKolom] === spel.id;
-      const jokerElders = deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
+      const jokerHier = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spel.id;
+      const jokerElders = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
 
       const selectHtml = (positie) => {
         const huidig = huidigeSelectie(spel.id, categorie, positie);
@@ -502,10 +505,11 @@ function renderSpellen(){
         <div class="cat-blok">
           <div class="cat-titel">
             <strong>${categorie==='heren'?'Heren':'Dames'}</strong>
+            ${spel.is_eindstand ? '' : `
             <button class="joker-toggle ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
               onclick="toggleJoker('${spel.id}','${categorie}')" title="${jokerElders?'Joker al ingezet op een ander spel':'Zet joker in op dit spel (verdubbelt spelpunten)'}">
               ${jokerHier ? '★ Joker actief' : '☆ Joker'}
-            </button>
+            </button>`}
           </div>
           <div class="top3-grid">
             <div><div class="top3-pos">#1 — +5 bonus</div>${selectHtml(1)}</div>
@@ -516,12 +520,13 @@ function renderSpellen(){
     };
 
     return `
-      <div class="spel-card">
+      <div class="spel-card ${spel.is_eindstand?'eindstand-card':''}">
         <div class="spel-header">
-          <span class="spel-naam">${spel.naam}</span>
+          <span class="spel-naam">${spel.is_eindstand ? '🏆 ' : ''}${spel.naam}</span>
           <span class="spel-deadline ${gesloten?'verstreken':''}">${gesloten?'Gesloten sinds':'Sluit'} ${deadlineTekst}</span>
         </div>
         <div class="spel-body">
+          ${spel.is_eindstand ? '<div class="eindstand-note">Voorspel de uiteindelijke eindstand (top 3) van de Feestweek — deze voorspelling telt <strong>dubbel</strong> mee en is uitgesloten van de joker.</div>' : ''}
           ${catBlok('heren')}
           ${catBlok('dames')}
           ${gesloten ? '<div class="spel-locked-msg">De inzendtermijn voor dit spel is verstreken.</div>' :
@@ -549,7 +554,7 @@ async function slaSpelOp(spelId){
     if(top3.some(v=>!v)) continue; // deze categorie nog niet (volledig) ingevuld, overslaan
 
     const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
-    const joker = deelnemer && deelnemer[jokerKolom] === spelId;
+    const joker = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spelId;
 
     try{
       const res = await fetch(`${SB_URL}/functions/v1/fw2026-opslaan-voorspelling`, {
@@ -604,10 +609,15 @@ function berekenEigenPunten(){
           if(actueelMap[pos] === teamId) catPunten += bonusPerPositie[pos];
         });
 
-        const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
-        const joker = deelnemer && deelnemer[jokerKolom] === spel.id;
-        // Joker verdubbelt alleen de 'aanwezig in top3'-punten + positiebonus die uit ditzelfde spel komen (spelpunten totaal), niet bonusvragen.
-        spelTotaal += joker ? catPunten * 2 : catPunten;
+        if(spel.is_eindstand){
+          // Eindstand/supercup-voorspelling: telt altijd dubbel, geen joker mogelijk hier.
+          spelTotaal += catPunten * 2;
+        } else {
+          const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+          const joker = deelnemer && deelnemer[jokerKolom] === spel.id;
+          // Joker verdubbelt alleen de 'aanwezig in top3'-punten + positiebonus die uit ditzelfde spel komen (spelpunten totaal), niet bonusvragen.
+          spelTotaal += joker ? catPunten * 2 : catPunten;
+        }
       });
       perSpel[spel.id] = spelTotaal;
     });
@@ -642,6 +652,11 @@ async function renderOverzicht(){
     document.getElementById('ov-totaal').textContent = eigenRij?.totaal ?? 0;
 
     const spelIds = leaderboard.spellen.map(s=>s.id);
+    document.getElementById('ov-thead').innerHTML = `<tr>
+      <th>#</th><th>Naam</th>
+      ${leaderboard.spellen.map(s=>`<th>${s.is_eindstand ? '🏆 ' + s.naam : s.naam}</th>`).join('')}
+      <th>Bonus</th><th>Totaal</th>
+    </tr>`;
     tbody.innerHTML = leaderboard.rijen.map((r,i)=>`
       <tr class="${r.deelnemer_id===sessie.user.id ? 'kl-jij' : ''}">
         <td class="kl-rank">${i+1}</td>
@@ -656,6 +671,13 @@ async function renderOverzicht(){
   // Nog geen gepubliceerde stand: toon alleen de eigen (client-side berekende) score.
   note.style.display = 'block';
   const { perSpel, bonusPunten } = berekenEigenPunten();
+
+  document.getElementById('ov-thead').innerHTML = `<tr>
+    <th>#</th><th>Naam</th>
+    ${spellen.map(s=>`<th>${s.is_eindstand ? '🏆 ' + s.naam : s.naam}</th>`).join('')}
+    <th>Bonus</th><th>Totaal</th>
+  </tr>`;
+
   const spelPunten = spellen.map(s=>perSpel[s.id]||0);
   const totaal = spelPunten.reduce((a,b)=>a+b,0) + bonusPunten;
 
@@ -666,7 +688,7 @@ async function renderOverzicht(){
   tbody.innerHTML = `<tr class="kl-jij">
     <td class="kl-rank">—</td>
     <td>${deelnemer?.naam || 'Jij'}</td>
-    ${[0,1,2,3,4].map(i=>`<td>${spelPunten[i]!==undefined?spelPunten[i]:'—'}</td>`).join('')}
+    ${spelPunten.map(p=>`<td>${p}</td>`).join('')}
     <td>${bonusPunten}</td>
     <td class="totaal">${totaal}</td>
   </tr>`;
