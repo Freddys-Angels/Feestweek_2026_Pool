@@ -72,7 +72,7 @@ Deno.serve(async (req: Request) => {
     // 1. Spel + sluitingstijd ophalen
     const { data: spel, error: spelErr } = await supabase
       .from("spellen")
-      .select("id, sluitingstijd")
+      .select("id, sluitingstijd, is_eindstand")
       .eq("id", spel_id)
       .single();
 
@@ -81,6 +81,12 @@ Deno.serve(async (req: Request) => {
     }
     if (new Date(spel.sluitingstijd).getTime() <= Date.now()) {
       return jsonRespons({ ok: false, error: "De inzendtermijn voor dit spel is verstreken." }, 403);
+    }
+    if (spel.is_eindstand && joker === true) {
+      return jsonRespons(
+        { ok: false, error: "De joker kan niet worden ingezet op de eindstand/supercup-voorspelling." },
+        400,
+      );
     }
 
     // 2. Deelnemersprofiel ophalen (voor joker-status)
