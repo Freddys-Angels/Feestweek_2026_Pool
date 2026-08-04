@@ -154,6 +154,17 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 
 .loading{text-align:center;color:var(--muted);padding:40px;font-size:13px;}
 @media(max-width:560px){.top3-grid{grid-template-columns:1fr;}}
+
+/* CHECKLIST (Overzicht) */
+.check-groep{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.check-groep h3{font-family:'Playfair Display',serif;font-size:15px;font-weight:900;color:var(--green);margin-bottom:10px;border-bottom:1px solid var(--bg2);padding-bottom:7px;}
+.check-rij{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--bg2);flex-wrap:wrap;}
+.check-rij:last-child{border-bottom:none;}
+.check-naam{font-size:13px;color:var(--text);font-weight:600;}
+.check-statussen{display:flex;gap:6px;flex-wrap:wrap;}
+.check-status{font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;white-space:nowrap;}
+.check-status.ok{background:var(--green3);color:var(--green);}
+.check-status.nok{background:#FEF2F2;color:var(--red2);}
 </style>
 </head>
 <body>
@@ -217,7 +228,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
   </header>
 
   <nav class="tabs">
-    <div class="tab active" data-tab="voorblad" onclick="wisselTab(this)">🏠 Voorblad</div>
+    <div class="tab active" data-tab="tussenstand" onclick="wisselTab(this)">📈 Tussenstand</div>
+    <div class="tab" data-tab="voorblad" onclick="wisselTab(this)">🏠 Voorblad</div>
     <div class="tab" data-tab="voorspellingen" onclick="wisselTab(this)">🎯 Voorspellingen</div>
     <div class="tab" data-tab="supercup" onclick="wisselTab(this)">🏆 Supercup</div>
     <div class="tab" data-tab="bonus" onclick="wisselTab(this)">⭐ Bonusvragen</div>
@@ -226,8 +238,45 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 
   <div class="content">
 
+    <!-- TUSSENSTAND -->
+    <section class="section active" id="sectie-tussenstand">
+      <div class="sec-title">Tussenstand</div>
+      <div class="sec-sub">De actuele ranglijst — individueel of per team.</div>
+
+      <div class="kl-toggle-row">
+        <button class="kl-toggle-btn active" id="kl-btn-individueel" onclick="wisselKlassement('individueel')">👤 Individueel klassement</button>
+        <button class="kl-toggle-btn" id="kl-btn-team" onclick="wisselKlassement('team')">👕 Team klassement</button>
+      </div>
+
+      <div id="kl-individueel-wrap">
+        <div class="kl-eigen">
+          <div>
+            <div class="kl-eigen-naam" id="ov-naam">—</div>
+            <div class="kl-eigen-sub" id="ov-team">Geen team gekoppeld</div>
+          </div>
+          <div class="kl-eigen-punten" id="ov-totaal">0</div>
+        </div>
+        <table class="kl-tabel">
+          <thead id="ov-thead">
+            <tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr>
+          </thead>
+          <tbody id="ov-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+        </table>
+        <div class="leaderboard-note" id="ov-note" style="display:none">Dit overzicht toont vooralsnog alleen jouw eigen punten (nog niet gepubliceerd). De volledige gecombineerde ranglijst verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
+      </div>
+
+      <div id="kl-team-wrap" style="display:none">
+        <div class="sec-sub" style="margin-bottom:12px">Ranglijst van teams op basis van het <strong>gemiddelde</strong> aantal punten per deelnemer — zo hebben grotere teams geen automatisch voordeel.</div>
+        <table class="kl-tabel">
+          <thead><tr><th>#</th><th>Team</th><th>Deelnemers</th><th>Totaal punten</th><th>Gem. punten</th></tr></thead>
+          <tbody id="kl-team-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+        </table>
+        <div class="leaderboard-note" id="kl-team-note" style="display:none"></div>
+      </div>
+    </section>
+
     <!-- VOORBLAD -->
-    <section class="section active" id="sectie-voorblad">
+    <section class="section" id="sectie-voorblad">
       <div class="vb-wrap">
         <div class="vb-hero">
           <h2>Freddy's Angels</h2>
@@ -271,41 +320,11 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <div id="bonus-lijst"><div class="loading">Nog geen bonusvragen beschikbaar.</div></div>
     </section>
 
-    <!-- OVERZICHT -->
+    <!-- OVERZICHT (checklist) -->
     <section class="section" id="sectie-overzicht">
       <div class="sec-title">Overzicht</div>
-      <div class="sec-sub">Jouw punten per spel en het totaal.</div>
-
-      <div class="kl-toggle-row">
-        <button class="kl-toggle-btn active" id="kl-btn-individueel" onclick="wisselKlassement('individueel')">👤 Individueel klassement</button>
-        <button class="kl-toggle-btn" id="kl-btn-team" onclick="wisselKlassement('team')">👕 Team klassement</button>
-      </div>
-
-      <div id="kl-individueel-wrap">
-        <div class="kl-eigen">
-          <div>
-            <div class="kl-eigen-naam" id="ov-naam">—</div>
-            <div class="kl-eigen-sub" id="ov-team">Geen team gekoppeld</div>
-          </div>
-          <div class="kl-eigen-punten" id="ov-totaal">0</div>
-        </div>
-        <table class="kl-tabel">
-          <thead id="ov-thead">
-            <tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr>
-          </thead>
-          <tbody id="ov-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
-        </table>
-        <div class="leaderboard-note" id="ov-note" style="display:none">Dit overzicht toont vooralsnog alleen jouw eigen punten (nog niet gepubliceerd). De volledige gecombineerde ranglijst verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
-      </div>
-
-      <div id="kl-team-wrap" style="display:none">
-        <div class="sec-sub" style="margin-bottom:12px">Ranglijst van teams op basis van het <strong>gemiddelde</strong> aantal punten per deelnemer — zo hebben grotere teams geen automatisch voordeel.</div>
-        <table class="kl-tabel">
-          <thead><tr><th>#</th><th>Team</th><th>Deelnemers</th><th>Totaal punten</th><th>Gem. punten</th></tr></thead>
-          <tbody id="kl-team-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
-        </table>
-        <div class="leaderboard-note" id="kl-team-note" style="display:none"></div>
-      </div>
+      <div class="sec-sub">Controleer of je alles hebt ingevuld: spellen, Supercup en bonusvragen — en of je jokers zijn ingezet.</div>
+      <div id="checklist-lijst"><div class="loading">Laden...</div></div>
     </section>
 
   </div>
@@ -478,7 +497,8 @@ function wisselTab(el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('sectie-' + el.dataset.tab).classList.add('active');
-  if(el.dataset.tab === 'overzicht') renderOverzicht();
+  if(el.dataset.tab === 'tussenstand') renderTussenstand();
+  if(el.dataset.tab === 'overzicht') renderChecklist();
 }
 
 // ── KLASSEMENT: INDIVIDUEEL / TEAM TOGGLE ──
@@ -812,7 +832,7 @@ async function haalGepubliceerdeStand(){
   }
 }
 
-async function renderOverzicht(){
+async function renderTussenstand(){
   const leaderboard = await haalGepubliceerdeStand();
   laatsteLeaderboard = leaderboard;
   const tbody = document.getElementById('ov-tbody');
@@ -872,6 +892,80 @@ async function renderOverzicht(){
   if(klassementView==='team') renderTeamKlassement();
 }
 
+// ── OVERZICHT: CHECKLIST (heb ik alles ingevuld?) ──
+function isTop3Compleet(spelId, categorie){
+  const voorspeld = voorspelling?.predictions?.[spelId]?.[categorie];
+  return !!(voorspeld && [1,2,3].every(pos=>voorspeld[String(pos)]));
+}
+function jokerInfo(categorie){
+  const kolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+  const spelId = deelnemer?.[kolom];
+  if(!spelId) return null;
+  const spel = spellen.find(s=>s.id===spelId);
+  return spel ? spel.naam : null;
+}
+function checkBadge(ok, labelOk, labelNok){
+  return `<span class="check-status ${ok?'ok':'nok'}">${ok ? '✓ ' + labelOk : '– ' + labelNok}</span>`;
+}
+function renderChecklist(){
+  const wrap = document.getElementById('checklist-lijst');
+  const gewoneSpellen = spellen.filter(s=>!s.is_eindstand);
+  const eindstandSpellen = spellen.filter(s=>s.is_eindstand);
+
+  let html = '<div class="check-groep"><h3>🎯 Spellen</h3>';
+  if(!gewoneSpellen.length){
+    html += '<div class="check-rij"><span class="check-naam" style="color:var(--muted)">Nog geen spellen ingesteld</span></div>';
+  } else {
+    gewoneSpellen.forEach(spel=>{
+      html += `<div class="check-rij">
+        <span class="check-naam">${spel.naam}</span>
+        <span class="check-statussen">
+          ${checkBadge(isTop3Compleet(spel.id,'heren'), 'Heren', 'Heren')}
+          ${checkBadge(isTop3Compleet(spel.id,'dames'), 'Dames', 'Dames')}
+        </span>
+      </div>`;
+    });
+  }
+  html += '</div>';
+
+  html += `<div class="check-groep"><h3>🃏 Joker</h3>
+    <div class="check-rij"><span class="check-naam">Heren</span>${checkBadge(!!jokerInfo('heren'), 'Ingezet op ' + (jokerInfo('heren')||''), 'Nog niet ingezet')}</div>
+    <div class="check-rij"><span class="check-naam">Dames</span>${checkBadge(!!jokerInfo('dames'), 'Ingezet op ' + (jokerInfo('dames')||''), 'Nog niet ingezet')}</div>
+  </div>`;
+
+  html += '<div class="check-groep"><h3>🏆 Supercup</h3>';
+  if(!eindstandSpellen.length){
+    html += '<div class="check-rij"><span class="check-naam" style="color:var(--muted)">Nog niet geopend</span></div>';
+  } else {
+    eindstandSpellen.forEach(spel=>{
+      html += `<div class="check-rij">
+        <span class="check-naam">${spel.naam}</span>
+        <span class="check-statussen">
+          ${checkBadge(isTop3Compleet(spel.id,'heren'), 'Heren', 'Heren')}
+          ${checkBadge(isTop3Compleet(spel.id,'dames'), 'Dames', 'Dames')}
+        </span>
+      </div>`;
+    });
+  }
+  html += '</div>';
+
+  html += '<div class="check-groep"><h3>⭐ Bonusvragen</h3>';
+  if(!bonusvragen.length){
+    html += '<div class="check-rij"><span class="check-naam" style="color:var(--muted)">Nog geen bonusvragen beschikbaar</span></div>';
+  } else {
+    bonusvragen.forEach(v=>{
+      const beantwoord = !!(voorspelling?.bonus_antwoorden?.[v.id]);
+      html += `<div class="check-rij">
+        <span class="check-naam">${v.vraag}</span>
+        ${checkBadge(beantwoord, 'Beantwoord', 'Nog niet beantwoord')}
+      </div>`;
+    });
+  }
+  html += '</div>';
+
+  wrap.innerHTML = html;
+}
+
 // ── OPSTARTEN ──
 async function startApp(){
   document.getElementById('gate-wrap').style.display = 'none';
@@ -882,6 +976,7 @@ async function startApp(){
   renderSpellen();
   renderSupercup();
   renderBonus();
+  renderTussenstand(); // eerste/standaard tabblad
 }
 
 (async function init(){
