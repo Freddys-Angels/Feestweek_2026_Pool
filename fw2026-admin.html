@@ -134,8 +134,8 @@ table.beheer tr:hover td{background:var(--bg3);}
       </div>
       <div style="margin-bottom:16px"><button class="btn btn-gold" onclick="berekenStand()" id="bereken-btn">★ Bereken &amp; Publiceer Stand</button></div>
       <table class="kl-tabel">
-        <thead><tr><th>#</th><th>Naam</th><th>Spel 1</th><th>Spel 2</th><th>Spel 3</th><th>Spel 4</th><th>Spel 5</th><th>Bonus</th><th>Totaal</th></tr></thead>
-        <tbody id="stand-tbody"><tr><td colspan="9" class="loading">Nog niet berekend.</td></tr></tbody>
+        <thead id="stand-thead"><tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr></thead>
+        <tbody id="stand-tbody"><tr><td colspan="4" class="loading">Nog niet berekend.</td></tr></tbody>
       </table>
     </section>
 
@@ -173,11 +173,17 @@ table.beheer tr:hover td{background:var(--bg3);}
           <input type="datetime-local" id="spel-sluiting">
           <button class="btn btn-gold btn-sm" onclick="voegSpelToe()">+ Toevoegen</button>
         </div>
+        <div class="form-row" style="margin-top:-2px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" id="spel-eindstand" style="width:auto;flex:none">
+            🏆 Dit is de <strong>Eindstand &amp; Supercup</strong>-voorspelling (telt dubbel, geen joker mogelijk)
+          </label>
+        </div>
       </div>
       <div class="card">
         <table class="beheer">
-          <thead><tr><th>Naam</th><th>Datum</th><th>Sluitingstijd</th><th>Volgorde</th><th></th></tr></thead>
-          <tbody id="spellen-tbody"><tr><td colspan="5" class="loading">Laden...</td></tr></tbody>
+          <thead><tr><th>Naam</th><th>Datum</th><th>Sluitingstijd</th><th>Volgorde</th><th></th><th></th></tr></thead>
+          <tbody id="spellen-tbody"><tr><td colspan="6" class="loading">Laden...</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -332,13 +338,14 @@ async function verwijderTeam(id){
 // ── SPELLEN ──
 function renderSpellen(){
   const tbody = document.getElementById('spellen-tbody');
-  if(!spellen.length){ tbody.innerHTML = '<tr><td colspan="5" class="loading">Nog geen spellen.</td></tr>'; return; }
+  if(!spellen.length){ tbody.innerHTML = '<tr><td colspan="6" class="loading">Nog geen spellen.</td></tr>'; return; }
   tbody.innerHTML = spellen.map(s=>`
     <tr>
       <td>${s.naam}</td>
       <td>${s.speeldatum || '—'}</td>
       <td>${new Date(s.sluitingstijd).toLocaleString('nl-NL')}</td>
       <td>${s.volgorde}</td>
+      <td>${s.is_eindstand ? '<span class="badge" style="background:var(--gold3);color:var(--gold)">🏆 Eindstand ·2x</span>' : ''}</td>
       <td><button class="btn btn-danger btn-sm" onclick="verwijderSpel('${s.id}')">Verwijder</button></td>
     </tr>`).join('');
 }
@@ -347,12 +354,14 @@ async function voegSpelToe(){
   const volgorde = parseInt(document.getElementById('spel-volgorde').value) || 0;
   const speeldatum = document.getElementById('spel-datum').value || null;
   const sluitingRaw = document.getElementById('spel-sluiting').value;
+  const is_eindstand = document.getElementById('spel-eindstand').checked;
   if(!naam || !sluitingRaw){ toonToast('Naam en sluitingstijd zijn verplicht.', true); return; }
   const sluitingstijd = new Date(sluitingRaw).toISOString();
-  const res = await adminActie('upsert_spel', { naam, volgorde, speeldatum, sluitingstijd });
+  const res = await adminActie('upsert_spel', { naam, volgorde, speeldatum, sluitingstijd, is_eindstand });
   if(res.ok){
     document.getElementById('spel-naam').value=''; document.getElementById('spel-volgorde').value='';
     document.getElementById('spel-datum').value=''; document.getElementById('spel-sluiting').value='';
+    document.getElementById('spel-eindstand').checked = false;
     toonToast('Spel toegevoegd.');
     await laadAlles(); renderSpellen(); renderUitslagen();
   }
@@ -466,8 +475,9 @@ async function berekenStand(){
   finally{ btn.disabled=false; btn.textContent='★ Bereken & Publiceer Stand'; }
 }
 function renderStand(leaderboard){
+  const kolomAantal = 4 + (leaderboard?.spellen?.length || 0);
   if(!leaderboard || !leaderboard.rijen?.length){
-    document.getElementById('stand-tbody').innerHTML = '<tr><td colspan="9" class="loading">Nog geen data om te berekenen.</td></tr>';
+    document.getElementById('stand-tbody').innerHTML = `<tr><td colspan="${kolomAantal}" class="loading">Nog geen data om te berekenen.</td></tr>`;
     return;
   }
   document.getElementById('ov-deelnemers').textContent = leaderboard.rijen.length;
@@ -475,6 +485,11 @@ function renderStand(leaderboard){
   document.getElementById('ov-leider').textContent = leaderboard.rijen[0]?.naam || '—';
 
   const spelIds = leaderboard.spellen.map(s=>s.id);
+  document.getElementById('stand-thead').innerHTML = `<tr>
+    <th>#</th><th>Naam</th>
+    ${leaderboard.spellen.map(s=>`<th>${s.is_eindstand ? '🏆 ' + s.naam : s.naam}</th>`).join('')}
+    <th>Bonus</th><th>Totaal</th>
+  </tr>`;
   document.getElementById('stand-tbody').innerHTML = leaderboard.rijen.map((r,i)=>`
     <tr>
       <td class="kl-rank">${i+1}</td>
