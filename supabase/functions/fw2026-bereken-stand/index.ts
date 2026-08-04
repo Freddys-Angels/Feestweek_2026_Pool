@@ -53,7 +53,7 @@ Deno.serve(async (req: Request) => {
       supabase.from("deelnemers").select("id, naam, team_id"),
       supabase.from("voorspellingen").select("deelnemer_id, predictions, bonus_antwoorden"),
       supabase.from("uitslagen").select("spel_id, categorie, positie, team_id"),
-      supabase.from("spellen").select("id, naam, volgorde").order("volgorde"),
+      supabase.from("spellen").select("id, naam, volgorde, is_eindstand").order("volgorde"),
       supabase.from("bonusvragen").select("id, punten, correct_antwoord"),
     ]);
 
@@ -97,9 +97,14 @@ Deno.serve(async (req: Request) => {
             if (actueelMap[pos] === teamId) catPunten += BONUS_PER_POSITIE[pos];
           });
 
-          const jokerKolom = categorie === "heren" ? "joker_heren_spel_id" : "joker_dames_spel_id";
-          const jokerActief = joker?.[jokerKolom] === spel.id;
-          spelTotaal += jokerActief ? catPunten * 2 : catPunten;
+          if (spel.is_eindstand) {
+            // Eindstand/supercup-voorspelling: telt altijd dubbel, geen joker mogelijk hier.
+            spelTotaal += catPunten * 2;
+          } else {
+            const jokerKolom = categorie === "heren" ? "joker_heren_spel_id" : "joker_dames_spel_id";
+            const jokerActief = joker?.[jokerKolom] === spel.id;
+            spelTotaal += jokerActief ? catPunten * 2 : catPunten;
+          }
         });
         perSpel[spel.id] = spelTotaal;
       });
@@ -132,7 +137,7 @@ Deno.serve(async (req: Request) => {
 
     const leaderboard = {
       gegenereerd_op: new Date().toISOString(),
-      spellen: alleSpellen.map((s) => ({ id: s.id, naam: s.naam })),
+      spellen: alleSpellen.map((s) => ({ id: s.id, naam: s.naam, is_eindstand: !!s.is_eindstand })),
       rijen,
     };
 
