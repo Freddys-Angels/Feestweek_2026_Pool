@@ -97,28 +97,40 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .vb-rule::before{content:'•';color:var(--green);font-weight:700;flex-shrink:0;}
 
 /* SPEL CARDS */
-.spel-card{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);}
-.spel-header{background:var(--green);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
+.spel-card{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.spel-header{background:var(--green);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-radius:9px 9px 0 0;}
 .spel-naam{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:var(--gold4);}
 .spel-deadline{font-size:11px;color:rgba(240,204,110,.75);font-family:'DM Mono',monospace;}
 .spel-deadline.verstreken{color:#FCA5A5;}
 .spel-body{padding:16px 18px;}
 .cat-blok{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bg2);}
 .cat-blok:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0;}
-.cat-titel{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.cat-titel{margin-bottom:8px;}
 .cat-titel strong{font-size:13px;color:var(--text);text-transform:uppercase;letter-spacing:.5px;}
-.joker-toggle{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;border:1px solid var(--border2);padding:4px 10px;border-radius:14px;background:var(--bg3);transition:all .15s;}
-.joker-toggle.aan{background:var(--gold2);color:var(--white);border-color:var(--gold2);}
-.joker-toggle:disabled,.joker-toggle.uitgeschakeld{opacity:.4;cursor:not-allowed;}
+.joker-row{display:flex;justify-content:center;margin:4px 0 14px;}
+.joker-toggle-groot{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--gold);cursor:pointer;border:2px solid var(--gold2);padding:10px 26px;border-radius:26px;background:var(--gold3);transition:all .18s;letter-spacing:.2px;}
+.joker-toggle-groot:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.35);}
+.joker-toggle-groot.aan{background:var(--gold2);color:var(--white);border-color:#b8922e;box-shadow:0 4px 16px rgba(201,168,76,.5);transform:scale(1.03);}
+.joker-toggle-groot:disabled,.joker-toggle-groot.uitgeschakeld{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
 .top3-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .top3-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+.top3-pos.dubbel{color:var(--gold);}
 .top3-select{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:8px 8px;border-radius:6px;font-family:'Lato',sans-serif;font-size:13px;}
 .top3-select:focus{outline:none;border-color:var(--green);}
+.top3-combo{position:relative;}
+.top3-combo .combo-input{padding:8px 10px;font-size:13px;}
+.top3-combo .combo-list{max-height:180px;}
 .spel-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:6px;}
 .spel-locked-msg{font-size:12px;color:var(--red2);background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;padding:8px 12px;margin-top:6px;}
 .eindstand-card{border:2px solid var(--gold2);box-shadow:0 2px 12px rgba(201,168,76,.25);}
 .eindstand-card .spel-header{background:linear-gradient(135deg,var(--green),#123f15);}
 .eindstand-note{font-size:12px;color:var(--gold);background:var(--gold3);border:1px solid var(--gold2);border-radius:6px;padding:8px 12px;margin-bottom:14px;line-height:1.6;}
+
+/* KLASSEMENT TOGGLE */
+.kl-toggle-row{display:flex;gap:10px;margin-bottom:18px;}
+.kl-toggle-btn{flex:1;padding:16px 10px;border:2px solid var(--border2);background:var(--white);color:var(--text2);font-family:'Playfair Display',serif;font-size:15px;font-weight:900;border-radius:10px;cursor:pointer;transition:all .18s;text-align:center;}
+.kl-toggle-btn:hover{border-color:var(--green2);}
+.kl-toggle-btn.active{background:var(--green);color:var(--gold4);border-color:var(--green);box-shadow:0 4px 14px rgba(26,92,30,.3);}
 
 /* OVERZICHT */
 .kl-eigen{background:var(--green);color:var(--gold4);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
@@ -174,7 +186,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <input type="email" class="gate-field" id="reg-email" placeholder="E-mailadres" autocomplete="username">
       <input type="password" class="gate-field" id="reg-ww" placeholder="Wachtwoord (min. 6 tekens)" autocomplete="new-password">
       <div class="combo" id="reg-team-combo">
-        <input type="text" class="combo-input" id="reg-team-input" placeholder="Zoek je Feestweek-team... (optioneel)" autocomplete="off">
+        <input type="text" class="combo-input" id="reg-team-input" placeholder="Kies je team (verplicht — of 'Geen team')" autocomplete="off">
         <div class="combo-list" id="reg-team-list"></div>
       </div>
       <div class="err" id="reg-err"></div>
@@ -263,20 +275,37 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
     <section class="section" id="sectie-overzicht">
       <div class="sec-title">Overzicht</div>
       <div class="sec-sub">Jouw punten per spel en het totaal.</div>
-      <div class="kl-eigen">
-        <div>
-          <div class="kl-eigen-naam" id="ov-naam">—</div>
-          <div class="kl-eigen-sub" id="ov-team">Geen team gekoppeld</div>
-        </div>
-        <div class="kl-eigen-punten" id="ov-totaal">0</div>
+
+      <div class="kl-toggle-row">
+        <button class="kl-toggle-btn active" id="kl-btn-individueel" onclick="wisselKlassement('individueel')">👤 Individueel klassement</button>
+        <button class="kl-toggle-btn" id="kl-btn-team" onclick="wisselKlassement('team')">👕 Team klassement</button>
       </div>
-      <table class="kl-tabel">
-        <thead id="ov-thead">
-          <tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr>
-        </thead>
-        <tbody id="ov-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
-      </table>
-      <div class="leaderboard-note" id="ov-note" style="display:none">Dit overzicht toont vooralsnog alleen jouw eigen punten (nog niet gepubliceerd). De volledige gecombineerde ranglijst verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
+
+      <div id="kl-individueel-wrap">
+        <div class="kl-eigen">
+          <div>
+            <div class="kl-eigen-naam" id="ov-naam">—</div>
+            <div class="kl-eigen-sub" id="ov-team">Geen team gekoppeld</div>
+          </div>
+          <div class="kl-eigen-punten" id="ov-totaal">0</div>
+        </div>
+        <table class="kl-tabel">
+          <thead id="ov-thead">
+            <tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr>
+          </thead>
+          <tbody id="ov-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+        </table>
+        <div class="leaderboard-note" id="ov-note" style="display:none">Dit overzicht toont vooralsnog alleen jouw eigen punten (nog niet gepubliceerd). De volledige gecombineerde ranglijst verschijnt hier zodra de admin-pagina de puntentelling publiceert.</div>
+      </div>
+
+      <div id="kl-team-wrap" style="display:none">
+        <div class="sec-sub" style="margin-bottom:12px">Ranglijst van teams op basis van het <strong>gemiddelde</strong> aantal punten per deelnemer — zo hebben grotere teams geen automatisch voordeel.</div>
+        <table class="kl-tabel">
+          <thead><tr><th>#</th><th>Team</th><th>Deelnemers</th><th>Totaal punten</th><th>Gem. punten</th></tr></thead>
+          <tbody id="kl-team-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Laden...</td></tr></tbody>
+        </table>
+        <div class="leaderboard-note" id="kl-team-note" style="display:none"></div>
+      </div>
     </section>
 
   </div>
@@ -297,6 +326,7 @@ let bonusvragen = [];    // bonusvragen (later)
 let deelnemer = null;    // eigen profiel uit 'deelnemers'
 let voorspelling = null; // eigen rij uit 'voorspellingen'
 let gekozenTeamId = null; // tijdens registratie geselecteerd team
+let teamKeuzeGemaakt = false; // true zodra deelnemer expliciet een team (of 'geen team') heeft aangeklikt
 
 function hdrs(metAuth){
   const h = { 'apikey': SB_KEY, 'Content-Type': 'application/json' };
@@ -344,7 +374,8 @@ function renderTeamCombo(){
   list.querySelectorAll('.combo-opt[data-id]').forEach(el=>{
     el.onclick = ()=>{
       gekozenTeamId = el.dataset.id || null;
-      input.value = el.dataset.id ? el.textContent : '';
+      teamKeuzeGemaakt = true;
+      input.value = el.dataset.id ? el.textContent : 'Geen team';
       list.classList.remove('open');
     };
   });
@@ -390,6 +421,7 @@ async function doeRegistreren(){
   err.textContent = '';
   if(!naam || !email || !ww){ err.textContent = 'Vul alle verplichte velden in.'; return; }
   if(ww.length < 6){ err.textContent = 'Wachtwoord moet minimaal 6 tekens zijn.'; return; }
+  if(!teamKeuzeGemaakt){ err.textContent = 'Kies een team, of kies expliciet "Geen team".'; return; }
 
   const btn = document.getElementById('reg-btn');
   btn.disabled = true; btn.textContent = 'Bezig...';
@@ -449,6 +481,56 @@ function wisselTab(el){
   if(el.dataset.tab === 'overzicht') renderOverzicht();
 }
 
+// ── KLASSEMENT: INDIVIDUEEL / TEAM TOGGLE ──
+let klassementView = 'individueel';
+let laatsteLeaderboard = null;
+function wisselKlassement(view){
+  klassementView = view;
+  document.getElementById('kl-btn-individueel').classList.toggle('active', view==='individueel');
+  document.getElementById('kl-btn-team').classList.toggle('active', view==='team');
+  document.getElementById('kl-individueel-wrap').style.display = view==='individueel' ? 'block' : 'none';
+  document.getElementById('kl-team-wrap').style.display = view==='team' ? 'block' : 'none';
+  if(view==='team') renderTeamKlassement();
+}
+function renderTeamKlassement(){
+  const tbody = document.getElementById('kl-team-tbody');
+  const note = document.getElementById('kl-team-note');
+  if(!laatsteLeaderboard || !laatsteLeaderboard.rijen?.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Nog geen data.</td></tr>';
+    note.style.display = 'block';
+    note.textContent = 'Het team klassement verschijnt zodra de admin de puntenstand publiceert.';
+    return;
+  }
+  note.style.display = 'none';
+
+  const perTeam = {};
+  laatsteLeaderboard.rijen.forEach(r=>{
+    if(!r.team_id) return; // deelnemers zonder team tellen niet mee in het team klassement
+    if(!perTeam[r.team_id]) perTeam[r.team_id] = { aantal:0, totaal:0 };
+    perTeam[r.team_id].aantal += 1;
+    perTeam[r.team_id].totaal += r.totaal;
+  });
+
+  const rijen = Object.entries(perTeam).map(([teamId, v])=>({
+    naam: teamNaam(teamId), aantal: v.aantal, totaal: v.totaal, gemiddelde: v.totaal / v.aantal,
+  }));
+  // Gemiddelde is leading, zodat grotere teams geen automatisch voordeel hebben.
+  rijen.sort((a,b)=>b.gemiddelde - a.gemiddelde);
+
+  if(!rijen.length){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">Nog geen deelnemers met een team gekoppeld.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rijen.map((r,i)=>`
+    <tr>
+      <td class="kl-rank">${i+1}</td>
+      <td>${r.naam}</td>
+      <td>${r.aantal}</td>
+      <td>${r.totaal}</td>
+      <td class="totaal">${r.gemiddelde.toFixed(1)}</td>
+    </tr>`).join('');
+}
+
 // ── DATA LADEN ──
 async function laadPubliekeData(){
   const [teamsRes, spellenRes, uitslagenRes, bonusRes] = await Promise.all([
@@ -487,6 +569,13 @@ function huidigeSelectie(spelId, categorie, positie){
   return spel[categorie][String(positie)] || '';
 }
 
+function top3PosLabel(pos, dubbel){
+  const basis = { 1:10, 2:10, 3:10 }[pos];
+  const bonus = { 1:5, 2:3, 3:2 }[pos];
+  const mult = dubbel ? 2 : 1;
+  return `#${pos} — ${basis*mult}pt (+${bonus*mult} bonus)${dubbel ? ' ⚡2x' : ''}`;
+}
+
 function renderSpelKaart(spel){
   const gesloten = new Date(spel.sluitingstijd).getTime() <= Date.now();
   const deadlineTekst = new Date(spel.sluitingstijd).toLocaleString('nl-NL', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
@@ -496,29 +585,32 @@ function renderSpelKaart(spel){
     const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
     const jokerHier = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spel.id;
     const jokerElders = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
+    const dubbel = spel.is_eindstand || jokerHier;
 
-    const selectHtml = (positie) => {
-      const huidig = huidigeSelectie(spel.id, categorie, positie);
-      return `<select class="top3-select" ${gesloten?'disabled':''} data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
-        <option value="">—</option>
-        ${opties.map(t=>`<option value="${t.id}" ${t.id===huidig?'selected':''}>${t.naam}</option>`).join('')}
-      </select>`;
+    const comboHtml = (positie) => {
+      const huidigId = huidigeSelectie(spel.id, categorie, positie);
+      const huidigNaam = huidigId ? (opties.find(t=>t.id===huidigId)?.naam || '') : '';
+      return `<div class="combo top3-combo" data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
+        <input type="text" class="combo-input top3-combo-input" ${gesloten?'disabled':''} placeholder="Typ een team..." value="${huidigNaam}" autocomplete="off">
+        <input type="hidden" class="top3-combo-value" value="${huidigId}">
+        <div class="combo-list"></div>
+      </div>`;
     };
 
     return `
       <div class="cat-blok">
-        <div class="cat-titel">
-          <strong>${categorie==='heren'?'Heren':'Dames'}</strong>
-          ${spel.is_eindstand ? '' : `
-          <button class="joker-toggle ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
+        <div class="cat-titel"><strong>${categorie==='heren'?'Heren':'Dames'}</strong></div>
+        ${spel.is_eindstand ? '' : `
+        <div class="joker-row">
+          <button class="joker-toggle-groot ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
             onclick="toggleJoker('${spel.id}','${categorie}')" title="${jokerElders?'Joker al ingezet op een ander spel':'Zet joker in op dit spel (verdubbelt spelpunten)'}">
-            ${jokerHier ? '★ Joker actief' : '☆ Joker'}
-          </button>`}
-        </div>
+            ${jokerHier ? '🃏 Joker actief — punten tellen dubbel!' : '🃏 Zet Joker in (verdubbelt punten)'}
+          </button>
+        </div>`}
         <div class="top3-grid">
-          <div><div class="top3-pos">#1 — +5 bonus</div>${selectHtml(1)}</div>
-          <div><div class="top3-pos">#2 — +3 bonus</div>${selectHtml(2)}</div>
-          <div><div class="top3-pos">#3 — +2 bonus</div>${selectHtml(3)}</div>
+          <div><div class="top3-pos ${dubbel?'dubbel':''}">${top3PosLabel(1,dubbel)}</div>${comboHtml(1)}</div>
+          <div><div class="top3-pos ${dubbel?'dubbel':''}">${top3PosLabel(2,dubbel)}</div>${comboHtml(2)}</div>
+          <div><div class="top3-pos ${dubbel?'dubbel':''}">${top3PosLabel(3,dubbel)}</div>${comboHtml(3)}</div>
         </div>
       </div>`;
   };
@@ -553,13 +645,74 @@ function renderSupercup(){
   wrap.innerHTML = eindstandSpellen.map(renderSpelKaart).join('');
 }
 
+// ── TYPEAHEAD-INVOER VOOR TOP3-VOORSPELLINGEN (gedelegeerde events, werkt na elke re-render) ──
+function openTop3Combo(inputEl){
+  const wrap = inputEl.closest('.top3-combo');
+  const categorie = wrap.dataset.cat;
+  const zoek = inputEl.value.trim().toLowerCase();
+  const opties = teams.filter(t=>t.categorie===categorie && t.naam.toLowerCase().includes(zoek));
+  const list = wrap.querySelector('.combo-list');
+  list.innerHTML = opties.length
+    ? opties.map(t=>`<div class="combo-opt" data-id="${t.id}">${t.naam}</div>`).join('')
+    : `<div class="combo-opt" style="color:var(--muted)">Geen teams gevonden</div>`;
+  list.classList.add('open');
+}
+document.addEventListener('focus', function(e){
+  if(e.target.classList && e.target.classList.contains('top3-combo-input')) openTop3Combo(e.target);
+}, true);
+document.addEventListener('input', function(e){
+  if(e.target.classList && e.target.classList.contains('top3-combo-input')){
+    const wrap = e.target.closest('.top3-combo');
+    wrap.querySelector('.top3-combo-value').value = ''; // keuze ongeldig maken zolang er getypt wordt
+    openTop3Combo(e.target);
+  }
+});
+document.addEventListener('click', function(e){
+  const opt = e.target.closest('.top3-combo .combo-opt[data-id]');
+  if(opt){
+    const wrap = opt.closest('.top3-combo');
+    wrap.querySelector('.top3-combo-input').value = opt.textContent;
+    wrap.querySelector('.top3-combo-value').value = opt.dataset.id;
+    wrap.querySelector('.combo-list').classList.remove('open');
+    return;
+  }
+  document.querySelectorAll('.top3-combo .combo-list.open').forEach(list=>{
+    if(!list.closest('.top3-combo').contains(e.target)) list.classList.remove('open');
+  });
+});
+
+// ── LOKALE (NOG NIET OPGESLAGEN) INVOER BEWAREN BIJ HERTEKENEN ──
+function leesOpenInvoer(){
+  const state = {};
+  document.querySelectorAll('.top3-combo').forEach(wrap=>{
+    const key = `${wrap.dataset.spel}|${wrap.dataset.cat}|${wrap.dataset.pos}`;
+    state[key] = {
+      id: wrap.querySelector('.top3-combo-value').value,
+      naam: wrap.querySelector('.top3-combo-input').value,
+    };
+  });
+  return state;
+}
+function herstelOpenInvoer(state){
+  document.querySelectorAll('.top3-combo').forEach(wrap=>{
+    const key = `${wrap.dataset.spel}|${wrap.dataset.cat}|${wrap.dataset.pos}`;
+    const saved = state[key];
+    if(saved && saved.id){
+      wrap.querySelector('.top3-combo-value').value = saved.id;
+      wrap.querySelector('.top3-combo-input').value = saved.naam;
+    }
+  });
+}
+
 async function toggleJoker(spelId, categorie){
   // Alleen lokaal togglen in het deelnemer-object; wordt pas bij "Opslaan" definitief via de Edge Function.
   const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
   if(!deelnemer) return;
+  const bewaardeInvoer = leesOpenInvoer(); // nog niet opgeslagen keuzes vasthouden vóór het hertekenen
   deelnemer[jokerKolom] = deelnemer[jokerKolom] === spelId ? null : spelId;
   renderSpellen();
   renderSupercup();
+  herstelOpenInvoer(bewaardeInvoer);
 }
 
 async function slaSpelOp(spelId){
@@ -567,8 +720,9 @@ async function slaSpelOp(spelId){
   if(!spel) return;
 
   for(const categorie of ['heren','dames']){
-    const selects = document.querySelectorAll(`select[data-spel="${spelId}"][data-cat="${categorie}"]`);
-    const top3 = Array.from(selects).map(s=>s.value);
+    const wraps = Array.from(document.querySelectorAll(`.top3-combo[data-spel="${spelId}"][data-cat="${categorie}"]`))
+      .sort((a,b)=>a.dataset.pos - b.dataset.pos);
+    const top3 = wraps.map(w=>w.querySelector('.top3-combo-value').value);
     if(top3.some(v=>!v)) continue; // deze categorie nog niet (volledig) ingevuld, overslaan
 
     const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
@@ -585,10 +739,12 @@ async function slaSpelOp(spelId){
       toonToast('Netwerkfout bij opslaan.', true); return;
     }
   }
+  const bewaardeInvoer = leesOpenInvoer(); // invoer bij andere, nog niet opgeslagen spellen niet kwijtraken
   toonToast('Voorspelling opgeslagen!');
   await laadEigenData();
   renderSpellen();
   renderSupercup();
+  herstelOpenInvoer(bewaardeInvoer);
 }
 
 // ── BONUSVRAGEN (placeholder) ──
@@ -658,6 +814,7 @@ async function haalGepubliceerdeStand(){
 
 async function renderOverzicht(){
   const leaderboard = await haalGepubliceerdeStand();
+  laatsteLeaderboard = leaderboard;
   const tbody = document.getElementById('ov-tbody');
   const note = document.getElementById('ov-note');
 
@@ -684,6 +841,7 @@ async function renderOverzicht(){
         <td>${r.bonus_punten}</td>
         <td class="totaal">${r.totaal}</td>
       </tr>`).join('');
+    if(klassementView==='team') renderTeamKlassement();
     return;
   }
 
@@ -711,6 +869,7 @@ async function renderOverzicht(){
     <td>${bonusPunten}</td>
     <td class="totaal">${totaal}</td>
   </tr>`;
+  if(klassementView==='team') renderTeamKlassement();
 }
 
 // ── OPSTARTEN ──
