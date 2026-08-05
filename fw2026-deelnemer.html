@@ -990,6 +990,7 @@ async function startApp(){
       localStorage.removeItem('fw2026_sessie');
     }
   }
+  try{ await laadPubliekeData(); }catch(e){ /* gate moet ook zichtbaar worden als dit faalt */ }
   document.getElementById('gate-wrap').style.display = 'flex';
 })();
 </script>
