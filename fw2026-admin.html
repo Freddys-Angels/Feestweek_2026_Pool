@@ -643,11 +643,16 @@ async function berekenStand(){
   btn.disabled = true; btn.textContent = 'Bezig met berekenen...';
   try{
     const res = await fetch(`${SB_URL}/functions/v1/fw2026-bereken-stand`, { method:'POST', headers: hdrs(true) });
-    const data = await res.json();
-    if(!data.ok){ toonToast(data.error, true); return; }
+    const data = await res.json().catch(()=>null);
+    if(!res.ok || !data || !data.ok){
+      const foutmelding = data?.error || `Serverfout (${res.status})`;
+      console.error('berekenStand fout:', foutmelding);
+      toonToast(foutmelding, true);
+      return;
+    }
     renderStand(data.leaderboard);
     toonToast('Stand berekend en gepubliceerd!');
-  }catch(e){ toonToast('Netwerkfout.', true); }
+  }catch(e){ console.error('berekenStand netwerkfout:', e); toonToast('Netwerkfout: ' + e.message, true); }
   finally{ btn.disabled=false; btn.textContent='★ Bereken & Publiceer Stand'; }
 }
 function renderStand(leaderboard){
@@ -701,3 +706,4 @@ async function startApp(){
 </script>
 </body>
 </html>
+
