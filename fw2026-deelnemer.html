@@ -95,6 +95,14 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .vb-box h3::before{content:'★ ';color:var(--red);font-size:13px;}
 .vb-rule{font-size:13px;color:var(--text2);line-height:1.8;padding:4px 0;display:flex;gap:8px;}
 .vb-rule::before{content:'•';color:var(--green);font-weight:700;flex-shrink:0;}
+.vb-sectie-titel{font-family:'Playfair Display',serif;font-size:14px;font-weight:900;color:var(--red);text-transform:uppercase;letter-spacing:1.5px;margin:26px 0 10px;text-align:center;}
+.vb-sectie-titel:first-of-type{margin-top:0;}
+.vb-inleg{background:var(--gold3);border:2px solid var(--gold2);border-radius:8px;padding:18px 20px;margin-bottom:14px;}
+.vb-inleg h3{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:var(--gold);margin-bottom:10px;}
+.vb-inleg p{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:4px;}
+.iban{font-family:'DM Mono',monospace;font-size:13px;color:var(--gold);background:rgba(0,0,0,.06);padding:3px 9px;border-radius:3px;display:inline-block;margin-top:3px;}
+.pot-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.pot-item{display:flex;justify-content:space-between;background:rgba(0,0,0,.08);border-radius:4px;padding:6px 10px;font-size:13px;}
 
 /* SPEL CARDS */
 .spel-card{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
@@ -286,6 +294,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
           <div class="sub">★ Feestweek 2026 Pool ★ &nbsp;·&nbsp; 7–11 september</div>
           <p>Welkom bij de Freddy's Angels Feestweek Pool! Voorspel elke dag de top 3 van heren én dames en verzamel punten voor de gecombineerde eindstand.</p>
         </div>
+        <div class="vb-sectie-titel">📜 Spelregels</div>
         <div class="vb-box">
           <h3>Puntensysteem</h3>
           <div class="vb-rule">Team correct in top 3 (ongeacht positie): <strong>10&nbsp;pt</strong></div>
@@ -298,6 +307,26 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
           <h3>Belangrijk</h3>
           <div class="vb-rule">Elke dag sluit de inzending op een vast tijdstip — daarna kun je niet meer wijzigen</div>
           <div class="vb-rule">Eén gecombineerde eindstand voor heren + dames samen</div>
+        </div>
+
+        <div class="vb-inleg">
+          <h3>💰 Deelname &amp; Inleg</h3>
+          <p>Deelname aan de pool kost <strong style="color:var(--gold)">€ 10,00</strong> per persoon.</p>
+          <p>Maak dit bedrag over vóór de start van de Feestweek (zondag 6 september 2026) via bankoverschrijving:</p>
+          <p style="margin-top:8px"><strong>IBAN:</strong> <span class="iban">NL23INGB0669032662</span></p>
+          <p><strong>Ten name van:</strong> JPB Litjens</p>
+          <p><strong>Omschrijving:</strong> <em style="color:var(--gold)">Feestweek 2026 Pool – [Jouw Naam]</em></p>
+          <p style="margin-top:8px;font-size:12px;color:var(--muted)">⚠️ Deelname is definitief na ontvangst van de betaling.</p>
+          <div style="margin-top:14px;border-top:1px solid rgba(201,168,76,.3);padding-top:12px">
+            <p style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🏆 Verdeling prijzenpot</p>
+            <div class="pot-grid">
+              <div class="pot-item"><span>🥇 1e plaats</span><strong style="color:var(--gold)">50%</strong></div>
+              <div class="pot-item"><span>🥈 2e plaats</span><strong style="color:var(--gold)">20%</strong></div>
+              <div class="pot-item"><span>🥉 3e plaats</span><strong style="color:var(--gold)">15%</strong></div>
+              <div class="pot-item"><span>🏐 1e plaats teams</span><strong style="color:var(--gold)">10%</strong></div>
+              <div class="pot-item" style="grid-column:1/-1"><span>⚙️ Onkosten organisatie</span><strong style="color:var(--gold)">5%</strong></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
