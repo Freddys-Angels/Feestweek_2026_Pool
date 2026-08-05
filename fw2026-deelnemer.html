@@ -445,7 +445,8 @@ async function doeRegistreren(){
   const btn = document.getElementById('reg-btn');
   btn.disabled = true; btn.textContent = 'Bezig...';
   try{
-    const res = await fetch(`${SB_URL}/auth/v1/signup`, {
+    const redirectTo = encodeURIComponent(window.location.origin + window.location.pathname);
+    const res = await fetch(`${SB_URL}/auth/v1/signup?redirect_to=${redirectTo}`, {
       method:'POST', headers: hdrs(false),
       body: JSON.stringify({ email, password: ww, data: { naam, team_id: gekozenTeamId || '' } })
     });
@@ -474,7 +475,8 @@ async function doeResetAanvraag(){
   err.textContent = ''; msg.style.display = 'none';
   if(!email){ err.textContent = 'Vul je e-mailadres in.'; return; }
   try{
-    await fetch(`${SB_URL}/auth/v1/recover`, {
+    const redirectTo = encodeURIComponent(window.location.origin + window.location.pathname);
+    await fetch(`${SB_URL}/auth/v1/recover?redirect_to=${redirectTo}`, {
       method:'POST', headers: hdrs(false), body: JSON.stringify({ email })
     });
     msg.textContent = 'Als dit e-mailadres bekend is, is er een resetlink verstuurd.';
