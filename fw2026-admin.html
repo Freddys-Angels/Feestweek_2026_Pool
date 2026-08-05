@@ -197,15 +197,20 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
     <!-- SPELLEN -->
     <section class="section" id="sectie-spellen">
       <div class="sec-title">Spellen</div>
-      <div class="sec-sub">De 5 spellen van de Feestweek, met sluitingstijd per spel.</div>
+      <div class="sec-sub">De 5 spellen van de Feestweek, met sluitingstijd per spel. "Naam" is de korte naam (o.a. tussenstand), "Volledige naam" is de uitgebreide omschrijving op de invoerpagina bij Deelnemers.</div>
       <div class="card">
-        <h3>Nieuw spel</h3>
+        <h3 id="spel-form-titel">Nieuw spel</h3>
+        <input type="hidden" id="spel-id" value="">
         <div class="form-row">
-          <input type="text" id="spel-naam" placeholder="Spelnaam">
+          <input type="text" id="spel-naam" placeholder="Korte naam (bijv. Maandag)">
+          <input type="text" id="spel-volledige-naam" placeholder="Volledige naam (optioneel, bijv. Maandag — Poulewedstrijden)" style="flex:2">
+        </div>
+        <div class="form-row" style="margin-top:-2px">
           <input type="number" id="spel-volgorde" placeholder="Volgorde" style="max-width:100px">
           <input type="date" id="spel-datum">
           <input type="datetime-local" id="spel-sluiting">
-          <button class="btn btn-gold btn-sm" onclick="voegSpelToe()">+ Toevoegen</button>
+          <button class="btn btn-gold btn-sm" onclick="voegSpelToe()" id="spel-submit-btn">+ Toevoegen</button>
+          <button class="btn btn-outline btn-sm" onclick="annuleerSpelBewerken()" id="spel-annuleer-btn" style="display:none">Annuleren</button>
         </div>
         <div class="form-row" style="margin-top:-2px">
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
@@ -216,11 +221,12 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
       </div>
       <div class="card">
         <table class="beheer">
-          <thead><tr><th>Naam</th><th>Datum</th><th>Sluitingstijd</th><th>Volgorde</th><th></th><th></th></tr></thead>
-          <tbody id="spellen-tbody"><tr><td colspan="6" class="loading">Laden...</td></tr></tbody>
+          <thead><tr><th>Naam</th><th>Volledige naam</th><th>Datum</th><th>Sluitingstijd</th><th>Volgorde</th><th></th><th></th><th></th></tr></thead>
+          <tbody id="spellen-tbody"><tr><td colspan="8" class="loading">Laden...</td></tr></tbody>
         </table>
       </div>
     </section>
+
 
     <!-- UITSLAGEN -->
     <section class="section" id="sectie-uitslagen">
@@ -395,32 +401,66 @@ async function verwijderTeam(id){
 // ── SPELLEN ──
 function renderSpellen(){
   const tbody = document.getElementById('spellen-tbody');
-  if(!spellen.length){ tbody.innerHTML = '<tr><td colspan="6" class="loading">Nog geen spellen.</td></tr>'; return; }
+  if(!spellen.length){ tbody.innerHTML = '<tr><td colspan="8" class="loading">Nog geen spellen.</td></tr>'; return; }
   tbody.innerHTML = spellen.map(s=>`
     <tr>
       <td>${s.naam}</td>
+      <td>${s.volledige_naam ? s.volledige_naam : '<span class="muted-small">— (nog niet ingevuld)</span>'}</td>
       <td>${s.speeldatum || '—'}</td>
       <td>${new Date(s.sluitingstijd).toLocaleString('nl-NL')}</td>
       <td>${s.volgorde}</td>
       <td>${s.is_eindstand ? '<span class="badge" style="background:var(--gold3);color:var(--gold)">🏆 Eindstand ·2x</span>' : ''}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="bewerkSpel('${s.id}')">Bewerk</button></td>
       <td><button class="btn btn-danger btn-sm" onclick="verwijderSpel('${s.id}')">Verwijder</button></td>
     </tr>`).join('');
 }
+function bewerkSpel(id){
+  const s = spellen.find(x=>x.id===id);
+  if(!s) return;
+  document.getElementById('spel-id').value = s.id;
+  document.getElementById('spel-naam').value = s.naam || '';
+  document.getElementById('spel-volledige-naam').value = s.volledige_naam || '';
+  document.getElementById('spel-volgorde').value = s.volgorde ?? '';
+  document.getElementById('spel-datum').value = s.speeldatum || '';
+  // datetime-local heeft geen tijdzone-suffix nodig, lokale weergave volstaat
+  const d = new Date(s.sluitingstijd);
+  const pad = n => String(n).padStart(2,'0');
+  document.getElementById('spel-sluiting').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  document.getElementById('spel-eindstand').checked = !!s.is_eindstand;
+  document.getElementById('spel-form-titel').textContent = `Spel bewerken — ${s.naam}`;
+  document.getElementById('spel-submit-btn').textContent = '💾 Wijzigen opslaan';
+  document.getElementById('spel-annuleer-btn').style.display = '';
+  document.querySelector('#sectie-spellen .card').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function annuleerSpelBewerken(){
+  document.getElementById('spel-id').value = '';
+  document.getElementById('spel-naam').value = '';
+  document.getElementById('spel-volledige-naam').value = '';
+  document.getElementById('spel-volgorde').value = '';
+  document.getElementById('spel-datum').value = '';
+  document.getElementById('spel-sluiting').value = '';
+  document.getElementById('spel-eindstand').checked = false;
+  document.getElementById('spel-form-titel').textContent = 'Nieuw spel';
+  document.getElementById('spel-submit-btn').textContent = '+ Toevoegen';
+  document.getElementById('spel-annuleer-btn').style.display = 'none';
+}
 async function voegSpelToe(){
+  const id = document.getElementById('spel-id').value || undefined;
   const naam = document.getElementById('spel-naam').value.trim();
+  const volledige_naam = document.getElementById('spel-volledige-naam').value.trim();
   const volgorde = parseInt(document.getElementById('spel-volgorde').value) || 0;
   const speeldatum = document.getElementById('spel-datum').value || null;
   const sluitingRaw = document.getElementById('spel-sluiting').value;
   const is_eindstand = document.getElementById('spel-eindstand').checked;
   if(!naam || !sluitingRaw){ toonToast('Naam en sluitingstijd zijn verplicht.', true); return; }
   const sluitingstijd = new Date(sluitingRaw).toISOString();
-  const res = await adminActie('upsert_spel', { naam, volgorde, speeldatum, sluitingstijd, is_eindstand });
+  const res = await adminActie('upsert_spel', { id, naam, volledige_naam, volgorde, speeldatum, sluitingstijd, is_eindstand });
   if(res.ok){
-    document.getElementById('spel-naam').value=''; document.getElementById('spel-volgorde').value='';
-    document.getElementById('spel-datum').value=''; document.getElementById('spel-sluiting').value='';
-    document.getElementById('spel-eindstand').checked = false;
-    toonToast('Spel toegevoegd.');
+    toonToast(id ? 'Spel bijgewerkt.' : 'Spel toegevoegd.');
+    annuleerSpelBewerken();
     await laadAlles(); renderSpellen(); renderUitslagen();
+  } else {
+    toonToast(res.error, true);
   }
 }
 async function verwijderSpel(id){
