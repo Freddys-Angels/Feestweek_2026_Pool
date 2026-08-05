@@ -113,8 +113,12 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .spel-body{padding:16px 18px;}
 .cat-blok{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bg2);}
 .cat-blok:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0;}
-.cat-titel{margin-bottom:8px;}
+.cat-titel{margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .cat-titel strong{font-size:13px;color:var(--text);text-transform:uppercase;letter-spacing:.5px;}
+.cat-score-badge{font-size:11px;font-weight:800;color:var(--green);background:var(--bg3);border:1px solid var(--green);border-radius:12px;padding:2px 10px;}
+.pos-score-badge{font-size:10px;font-weight:700;margin-top:4px;padding:2px 6px;border-radius:4px;text-align:center;}
+.pos-score-badge.ok{color:var(--green);background:rgba(43,122,66,.12);}
+.pos-score-badge.nul{color:var(--muted);background:var(--bg3);}
 .joker-row{display:flex;justify-content:center;margin:4px 0 14px;}
 .joker-toggle-groot{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--gold);cursor:pointer;border:2px solid var(--gold2);padding:10px 26px;border-radius:26px;background:var(--gold3);transition:all .18s;letter-spacing:.2px;}
 .joker-toggle-groot:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.35);}
@@ -124,7 +128,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .joker-tekst span:first-child{font-size:14px;}
 .joker-tekst span:last-child{font-size:11px;font-weight:700;opacity:.85;letter-spacing:.4px;}
 .top3-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.top3-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px;}
+.top3-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px;letter-spacing:.2px;line-height:1.35;}
 .top3-pos.dubbel{color:var(--gold);}
 .top3-select{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:8px 8px;border-radius:6px;font-family:'Lato',sans-serif;font-size:13px;}
 .top3-select:focus{outline:none;border-color:var(--green);}
@@ -320,10 +324,10 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
           <div style="margin-top:14px;border-top:1px solid rgba(201,168,76,.3);padding-top:12px">
             <p style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🏆 Verdeling prijzenpot</p>
             <div class="pot-grid">
-              <div class="pot-item"><span>🥇 1e plaats</span><strong style="color:var(--gold)">50%</strong></div>
-              <div class="pot-item"><span>🥈 2e plaats</span><strong style="color:var(--gold)">20%</strong></div>
-              <div class="pot-item"><span>🥉 3e plaats</span><strong style="color:var(--gold)">15%</strong></div>
-              <div class="pot-item"><span>🏐 1e plaats teams</span><strong style="color:var(--gold)">10%</strong></div>
+              <div class="pot-item"><span>🥇 1e plaats (individueel)</span><strong style="color:var(--gold)">50%</strong></div>
+              <div class="pot-item"><span>🥈 2e plaats (individueel)</span><strong style="color:var(--gold)">20%</strong></div>
+              <div class="pot-item"><span>🥉 3e plaats (individueel)</span><strong style="color:var(--gold)">15%</strong></div>
+              <div class="pot-item"><span>🏐 1e plaats team klassement</span><strong style="color:var(--gold)">10%</strong></div>
               <div class="pot-item" style="grid-column:1/-1"><span>⚙️ Onkosten organisatie</span><strong style="color:var(--gold)">5%</strong></div>
             </div>
           </div>
@@ -627,7 +631,37 @@ function top3PosLabel(pos, dubbel){
   const basis = { 1:10, 2:10, 3:10 }[pos];
   const bonus = { 1:5, 2:3, 3:2 }[pos];
   const mult = dubbel ? 2 : 1;
-  return `#${pos} — ${basis*mult}pt (+${bonus*mult} bonus)${dubbel ? ' ⚡2x' : ''}`;
+  return `${basis*mult}pt goed in top 3 + ${bonus*mult}pt bonus bij exacte plek${dubbel ? ' ⚡2x' : ''}`;
+}
+
+// Berekent behaalde punten voor één spel+categorie op basis van de officiële
+// uitslag (indien al ingevuld door de admin) t.o.v. de eigen voorspelling.
+function berekenCategorieScore(spel, categorie){
+  const voorspeld = voorspelling?.predictions?.[spel.id]?.[categorie];
+  const actueel = uitslagen.filter(u=>u.spel_id===spel.id && u.categorie===categorie);
+  if(!actueel.length) return null; // uitslag nog niet bekend
+  if(!voorspeld) return { totaal:0, perPositie:{1:0,2:0,3:0}, ingevuld:false };
+
+  const actueelMap = {}; actueel.forEach(u=>actueelMap[u.positie]=u.team_id);
+  const actueleTop3 = Object.values(actueelMap);
+  const bonusPerPositie = {1:5,2:3,3:2};
+  const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+  const dubbel = spel.is_eindstand || (deelnemer && deelnemer[jokerKolom] === spel.id);
+  const mult = dubbel ? 2 : 1;
+
+  const perPositie = {};
+  let totaal = 0;
+  [1,2,3].forEach(pos=>{
+    const teamId = voorspeld[String(pos)];
+    let p = 0;
+    if(teamId){
+      if(actueleTop3.includes(teamId)) p += 10*mult;
+      if(actueelMap[pos] === teamId) p += bonusPerPositie[pos]*mult;
+    }
+    perPositie[pos] = p;
+    totaal += p;
+  });
+  return { totaal, perPositie, ingevuld:true };
 }
 
 function renderSpelKaart(spel){
@@ -640,20 +674,26 @@ function renderSpelKaart(spel){
     const jokerHier = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spel.id;
     const jokerElders = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] && deelnemer[jokerKolom] !== spel.id;
     const dubbel = spel.is_eindstand || jokerHier;
+    const score = berekenCategorieScore(spel, categorie);
 
     const comboHtml = (positie) => {
       const huidigId = huidigeSelectie(spel.id, categorie, positie);
       const huidigNaam = huidigId ? (opties.find(t=>t.id===huidigId)?.naam || '') : '';
+      const behaald = score ? score.perPositie[positie] : null;
+      const behaaldBadge = behaald===null ? '' : `<div class="pos-score-badge ${behaald>0?'ok':'nul'}">${behaald>0 ? `✓ ${behaald}pt behaald` : '0pt behaald'}</div>`;
       return `<div class="combo top3-combo" data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
         <input type="text" class="combo-input top3-combo-input" ${gesloten?'disabled':''} placeholder="Typ een team..." value="${huidigNaam}" autocomplete="off">
         <input type="hidden" class="top3-combo-value" value="${huidigId}">
         <div class="combo-list"></div>
+        ${behaaldBadge}
       </div>`;
     };
 
+    const catScoreBadge = score ? `<span class="cat-score-badge">🎯 ${score.totaal}pt behaald</span>` : '';
+
     return `
       <div class="cat-blok">
-        <div class="cat-titel"><strong>${categorie==='heren'?'Heren':'Dames'}</strong></div>
+        <div class="cat-titel"><strong>${categorie==='heren'?'Heren':'Dames'}</strong>${catScoreBadge}</div>
         ${spel.is_eindstand ? '' : `
         <div class="joker-row">
           <button class="joker-toggle-groot ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
@@ -1034,4 +1074,5 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
