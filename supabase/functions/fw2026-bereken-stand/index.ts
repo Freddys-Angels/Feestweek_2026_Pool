@@ -57,19 +57,42 @@ Deno.serve(async (req: Request) => {
       supabase.from("bonusvragen").select("id, punten, correct_antwoord"),
     ]);
 
+    // Elke query expliciet checken — anders faalt dit stilletjes met een lege
+    // lijst (data ?? []) zonder dat de admin ooit een foutmelding ziet.
+    const queryFouten = [
+      ["deelnemers", deelnemersRes.error],
+      ["voorspellingen", voorspellingenRes.error],
+      ["uitslagen", uitslagenRes.error],
+      ["spellen", spellenRes.error],
+      ["bonusvragen", bonusRes.error],
+    ].filter(([, err]) => err);
+    if (queryFouten.length) {
+      const msg = queryFouten.map(([tabel, err]) => `${tabel}: ${(err as { message: string }).message}`).join(" | ");
+      console.error("fw2026-bereken-stand queryfout:", msg);
+      return jsonRespons({ ok: false, error: "Databasefout bij ophalen: " + msg }, 500);
+    }
+
     const alleDeelnemers = deelnemersRes.data ?? [];
     const alleVoorspellingen = voorspellingenRes.data ?? [];
     const alleUitslagen = uitslagenRes.data ?? [];
     const alleSpellen = spellenRes.data ?? [];
     const alleBonusvragen = bonusRes.data ?? [];
 
+    if (!alleDeelnemers.length) {
+      console.warn("fw2026-bereken-stand: 0 deelnemers gevonden.");
+    }
+
     // Voorspelling per deelnemer_id opzoekbaar maken
     const voorspellingMap = new Map(alleVoorspellingen.map((v) => [v.deelnemer_id, v]));
 
     // Deelnemers-jokerkolommen (nodig voor spelpunten-verdubbeling) los ophalen
-    const { data: deelnemersMetJoker } = await supabase
+    const { data: deelnemersMetJoker, error: jokerQueryErr } = await supabase
       .from("deelnemers")
       .select("id, joker_heren_spel_id, joker_dames_spel_id");
+    if (jokerQueryErr) {
+      console.error("fw2026-bereken-stand jokerquery fout:", jokerQueryErr.message);
+      return jsonRespons({ ok: false, error: "Databasefout bij ophalen jokers: " + jokerQueryErr.message }, 500);
+    }
     const jokerMap = new Map((deelnemersMetJoker ?? []).map((d) => [d.id, d]));
 
     const rijen = alleDeelnemers.map((d) => {
@@ -162,3 +185,4 @@ Deno.serve(async (req: Request) => {
     return jsonRespons({ ok: false, error: String(e) }, 500);
   }
 });
+
