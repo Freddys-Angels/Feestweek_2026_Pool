@@ -71,12 +71,13 @@ Deno.serve(async (req: Request) => {
       }
 
       case "upsert_spel": {
-        const { id, naam, volgorde, speeldatum, sluitingstijd, is_eindstand } = data as any;
+        const { id, naam, volledige_naam, volgorde, speeldatum, sluitingstijd, is_eindstand } = data as any;
         if (!naam || !sluitingstijd) {
           return jsonRespons({ ok: false, error: "naam en sluitingstijd zijn verplicht." }, 400);
         }
         const rij = {
           naam,
+          volledige_naam: volledige_naam || null,
           volgorde: volgorde ?? 0,
           speeldatum: speeldatum ?? null,
           sluitingstijd,
