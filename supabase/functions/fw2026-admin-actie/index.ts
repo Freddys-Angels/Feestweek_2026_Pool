@@ -140,6 +140,19 @@ Deno.serve(async (req: Request) => {
         return jsonRespons({ ok: true, deelnemer: res });
       }
 
+      case "zet_team": {
+        const { id, team_id } = data as any;
+        if (!id) return jsonRespons({ ok: false, error: "id is verplicht." }, 400);
+        const { data: res, error } = await supabase
+          .from("deelnemers")
+          .update({ team_id: team_id || null })
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) return jsonRespons({ ok: false, error: error.message }, 500);
+        return jsonRespons({ ok: true, deelnemer: res });
+      }
+
       default:
         return jsonRespons({ ok: false, error: `Onbekende actie: ${actie}` }, 400);
     }
@@ -147,3 +160,4 @@ Deno.serve(async (req: Request) => {
     return jsonRespons({ ok: false, error: String(e) }, 500);
   }
 });
+
