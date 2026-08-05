@@ -96,6 +96,7 @@ table.beheer tr:hover td{background:var(--bg3);}
 .uitslag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .uitslag-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
 .uitslag-select{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:8px;border-radius:6px;font-size:13px;}
+.team-select{width:100%;min-width:130px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:6px 8px;border-radius:6px;font-size:12px;}
 .uitslag-select:focus{outline:none;border-color:var(--green);}
 @media(max-width:560px){.uitslag-grid{grid-template-columns:1fr;}}
 .eindstand-kaart{border:2px solid var(--gold2);box-shadow:0 2px 12px rgba(201,168,76,.25);}
@@ -505,6 +506,24 @@ async function verwijderBonus(id){
 
 // ── DEELNEMERS ──
 function teamNaam(id){ const t = teams.find(x=>x.id===id); return t ? t.naam : '—'; }
+function teamOptiesHtml(huidigId){
+  const herenOpties = teams.filter(t=>t.categorie==='heren').map(t=>`<option value="${t.id}" ${t.id===huidigId?'selected':''}>${t.naam}</option>`).join('');
+  const damesOpties = teams.filter(t=>t.categorie==='dames').map(t=>`<option value="${t.id}" ${t.id===huidigId?'selected':''}>${t.naam}</option>`).join('');
+  return `<option value="" ${!huidigId?'selected':''}>— Geen team —</option>
+    <optgroup label="Heren">${herenOpties}</optgroup>
+    <optgroup label="Dames">${damesOpties}</optgroup>`;
+}
+async function wijzigTeam(id, teamId){
+  const d = deelnemers.find(x=>x.id===id);
+  if(!d) return;
+  const vorige = d.team_id;
+  d.team_id = teamId || null; // optimistisch bijwerken
+  try{
+    const res = await adminActie('zet_team', { id, team_id: teamId || null });
+    if(!res.ok){ d.team_id = vorige; renderDeelnemers(); toonToast(res.error, true); return; }
+    toonToast('Team bijgewerkt.');
+  }catch(e){ d.team_id = vorige; renderDeelnemers(); toonToast('Netwerkfout bij team wijzigen.', true); }
+}
 function spelNaam(id){ const s = spellen.find(x=>x.id===id); return s ? s.naam : '—'; }
 
 function isTop3CompleetAdmin(vp, spelId, categorie){
@@ -584,7 +603,7 @@ function renderDeelnemers(){
     return `
     <tr>
       <td>${d.naam}${d.is_admin ? ' <span class="badge" style="background:var(--gold3);color:var(--gold)">admin</span>' : ''}</td>
-      <td>${d.team_id ? teamNaam(d.team_id) : '<span class="muted-small">—</span>'}</td>
+      <td><select class="team-select" onchange="wijzigTeam('${d.id}', this.value)">${teamOptiesHtml(d.team_id)}</select></td>
       <td class="center">${pillHtml(v.spellenIngevuld, v.spellenTotaal)}</td>
       <td class="center">${pillHtml(v.supercupIngevuld, v.supercupTotaal)}</td>
       <td class="center joker-badge" title="${d.joker_heren_spel_id ? spelNaam(d.joker_heren_spel_id) : 'nog niet ingezet'}">${d.joker_heren_spel_id ? '🃏' : '—'}</td>
@@ -706,4 +725,5 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
