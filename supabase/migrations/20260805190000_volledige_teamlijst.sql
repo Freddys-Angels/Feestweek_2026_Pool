@@ -3,6 +3,10 @@
 -- Volledige teamlijst Feestweek 2026 (overschrijft bestaande teams)
 -- ============================================================
 
+-- Eventuele bestaande teamkoppeling bij deelnemers eerst loskoppelen,
+-- anders blokkeert de foreign key het verwijderen van teams.
+update deelnemers set team_id = null;
+
 delete from uitslagen;
 delete from teams;
 
