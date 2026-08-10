@@ -39,7 +39,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .tab.active{color:var(--gold4);border-bottom-color:var(--gold2);}
 
 /* CONTENT */
-.content{max-width:900px;margin:0 auto;padding:24px 20px 60px;}
+.content{max-width:900px;margin:0 auto;padding:24px 20px 110px;}
 .section{display:none;}
 .section.active{display:block;}
 .sec-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--green);margin-bottom:4px;}
@@ -104,6 +104,30 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .pot-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
 .pot-item{display:flex;justify-content:space-between;background:rgba(0,0,0,.08);border-radius:4px;padding:6px 10px;font-size:13px;}
 
+/* SPELREGELS-KAART */
+.sr-kaart{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.sr-header{background:var(--green);padding:14px 18px;display:flex;align-items:center;gap:10px;}
+.sr-header-icon{width:30px;height:30px;border-radius:6px;background:rgba(240,204,110,.18);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.sr-header h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:900;color:var(--gold4);margin:0;}
+.sr-body{padding:18px 20px;}
+.sr-item{display:flex;gap:10px;font-size:13.5px;color:var(--text2);line-height:1.7;margin-bottom:10px;}
+.sr-item:last-of-type{margin-bottom:14px;}
+.sr-item-arrow{color:var(--green2);font-weight:900;flex-shrink:0;}
+.sr-warning{background:var(--green3);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:12.5px;color:var(--text2);line-height:1.6;display:flex;gap:8px;}
+
+/* STICKY INVULBALK */
+.invulbalk{position:fixed;left:0;right:0;bottom:0;z-index:150;background:var(--green);border-top:3px solid var(--gold2);box-shadow:0 -4px 16px rgba(0,0,0,.2);padding:10px 20px;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.invulbalk-progress{color:var(--gold4);font-size:12.5px;font-weight:800;letter-spacing:.2px;}
+.invulbalk-acties{display:flex;gap:8px;flex-wrap:wrap;}
+.invulbalk .btn-outline{background:transparent;border:1px solid rgba(240,204,110,.5);color:var(--gold4);}
+.invulbalk .btn-outline:hover{background:rgba(240,204,110,.12);border-color:var(--gold4);color:var(--gold4);}
+@media(max-width:560px){
+  .invulbalk{flex-direction:column;align-items:stretch;padding:10px 14px;}
+  .invulbalk-progress{text-align:center;}
+  .invulbalk-acties{justify-content:stretch;}
+  .invulbalk-acties .btn{flex:1;}
+}
+
 /* SPEL CARDS */
 .spel-card{background:var(--white);border:1px solid var(--border);border-radius:10px;margin-bottom:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
 .spel-header{background:var(--green);padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;border-radius:9px 9px 0 0;}
@@ -113,7 +137,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .spel-body{padding:16px 18px;}
 .cat-blok{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bg2);}
 .cat-blok:last-of-type{border-bottom:none;margin-bottom:8px;padding-bottom:0;}
-.cat-titel{margin-bottom:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.cat-titel{margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.cat-titel-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .cat-titel strong{font-size:13px;color:var(--text);text-transform:uppercase;letter-spacing:.5px;}
 .cat-score-badge{font-size:11px;font-weight:800;color:var(--green);background:var(--bg3);border:1px solid var(--green);border-radius:12px;padding:2px 10px;}
 .pos-score-badge{font-size:10px;font-weight:700;margin-top:4px;padding:2px 6px;border-radius:4px;text-align:center;}
@@ -125,6 +150,9 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .joker-toggle-groot:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.35);}
 .joker-toggle-groot.aan{background:var(--gold2);color:var(--white);border-color:#b8922e;box-shadow:0 4px 16px rgba(201,168,76,.5);transform:scale(1.03);}
 .joker-toggle-groot:disabled,.joker-toggle-groot.uitgeschakeld{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
+.joker-toggle-groot.klein{font-size:11px;padding:6px 14px;gap:6px;border-width:1.5px;}
+.joker-toggle-groot.klein .joker-tekst span:first-child{font-size:11px;}
+.joker-toggle-groot.klein .joker-tekst span:last-child{font-size:9px;}
 .joker-tekst{display:flex;flex-direction:column;line-height:1.3;text-align:left;}
 .joker-tekst span:first-child{font-size:14px;}
 .joker-tekst span:last-child{font-size:11px;font-weight:700;opacity:.85;letter-spacing:.4px;}
@@ -252,6 +280,14 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
     <div class="tab" data-tab="overzicht" onclick="wisselTab(this)">✅ Overzicht</div>
   </nav>
 
+  <div class="invulbalk" id="invulbalk">
+    <div class="invulbalk-progress" id="invulbalk-progress">📋 0/0 ingevuld</div>
+    <div class="invulbalk-acties">
+      <button class="btn btn-outline btn-sm" id="invulbalk-supercup-btn" onclick="gaNaarSupercup()">🏆 Door naar Supercup →</button>
+      <button class="btn btn-gold btn-sm" onclick="slaAllesOp()">💾 Alles opslaan</button>
+    </div>
+  </div>
+
   <div class="content">
 
     <!-- TUSSENSTAND -->
@@ -299,19 +335,17 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
           <div class="sub">★ Feestweek 2026 Pool ★ &nbsp;·&nbsp; 7–11 september</div>
           <p>Welkom bij de Freddy's Angels Feestweek Pool! Voorspel elke dag de top 3 van heren én dames en verzamel punten voor de gecombineerde eindstand.</p>
         </div>
-        <div class="vb-sectie-titel">📜 Spelregels</div>
-        <div class="vb-box">
-          <h3>Puntensysteem</h3>
-          <div class="vb-rule">Team correct in top 3 (ongeacht positie): <strong>10&nbsp;pt</strong></div>
-          <div class="vb-rule">Exact op #1 voorspeld: <strong>+5&nbsp;pt</strong> bonus</div>
-          <div class="vb-rule">Exact op #2 voorspeld: <strong>+3&nbsp;pt</strong> bonus</div>
-          <div class="vb-rule">Exact op #3 voorspeld: <strong>+2&nbsp;pt</strong> bonus</div>
-          <div class="vb-rule">Joker: 1x per categorie (heren/dames) verdubbelt de spelpunten van die dag (niet de bonusvragen)</div>
-        </div>
-        <div class="vb-box">
-          <h3>Belangrijk</h3>
-          <div class="vb-rule">Elke dag sluit de inzending op een vast tijdstip — daarna kun je niet meer wijzigen</div>
-          <div class="vb-rule">Eén gecombineerde eindstand voor heren + dames samen</div>
+        <div class="sr-kaart">
+          <div class="sr-header">
+            <div class="sr-header-icon">📋</div>
+            <h3>Spelregels</h3>
+          </div>
+          <div class="sr-body">
+            <div class="sr-item"><span class="sr-item-arrow">→</span><span>Voorspel voor de vijf feestweekspellen de top 3 voor zowel de heren als het dames klassement.</span></div>
+            <div class="sr-item"><span class="sr-item-arrow">→</span><span>Bij zowel de dames als de heren mag er 1x een joker worden ingezet. Zoals gebruikelijk verdubbelt deze joker de punten die je behaalt bij dat spel.</span></div>
+            <div class="sr-item"><span class="sr-item-arrow">→</span><span>Naast de spellen moet ook de top 3 voor de Supercup worden voorspeld. Ga hiervoor naar tabblad 'Supercup'.</span></div>
+            <div class="sr-warning">⚠️ <span>Elk spel heeft een eigen sluitingstijd. Na het sluiten van een spel kan de voorspelling voor dat spel niet meer worden aangepast.</span></div>
+          </div>
         </div>
 
         <div class="vb-inleg">
@@ -332,6 +366,18 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
               <div class="pot-item" style="grid-column:1/-1"><span>⚙️ Onkosten organisatie</span><strong style="color:var(--gold)">5%</strong></div>
             </div>
           </div>
+        </div>
+
+        <div class="vb-sectie-titel">🧮 Puntentelling</div>
+        <div class="vb-box">
+          <h3>Puntensysteem</h3>
+          <div class="vb-rule">Team correct in top 3 (ongeacht positie): <strong>10&nbsp;pt</strong></div>
+          <div class="vb-rule">Exact op #1 voorspeld: <strong>+5&nbsp;pt</strong> bonus</div>
+          <div class="vb-rule">Exact op #2 voorspeld: <strong>+3&nbsp;pt</strong> bonus</div>
+          <div class="vb-rule">Exact op #3 voorspeld: <strong>+2&nbsp;pt</strong> bonus</div>
+          <div class="vb-rule">Joker: 1x per categorie (heren/dames) verdubbelt de spelpunten van die dag (niet de bonusvragen)</div>
+          <div class="vb-rule">Elke dag sluit de inzending op een vast tijdstip — daarna kun je niet meer wijzigen</div>
+          <div class="vb-rule">Eén gecombineerde eindstand voor heren + dames samen</div>
         </div>
       </div>
     </section>
@@ -538,6 +584,13 @@ function wisselTab(el){
   document.getElementById('sectie-' + el.dataset.tab).classList.add('active');
   if(el.dataset.tab === 'tussenstand') renderTussenstand();
   if(el.dataset.tab === 'overzicht') renderChecklist();
+
+  const balk = document.getElementById('invulbalk');
+  const toonBalk = el.dataset.tab === 'voorspellingen' || el.dataset.tab === 'supercup';
+  balk.style.display = toonBalk ? 'flex' : 'none';
+  const supercupKnop = document.getElementById('invulbalk-supercup-btn');
+  if(supercupKnop) supercupKnop.style.display = el.dataset.tab === 'supercup' ? 'none' : '';
+  if(toonBalk) updateInvulbalk();
 }
 
 // ── KLASSEMENT: INDIVIDUEEL / TEAM TOGGLE ──
@@ -699,18 +752,18 @@ function renderSpelKaart(spel){
 
     return `
       <div class="cat-blok">
-        <div class="cat-titel"><strong>${categorie==='heren'?'Heren':'Dames'}</strong>${catScoreBadge}</div>
-        ${spel.is_eindstand ? '' : `
-        <div class="joker-row">
-          <button class="joker-toggle-groot ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
+        <div class="cat-titel">
+          <div class="cat-titel-links"><strong>${categorie==='heren'?'Heren':'Dames'}</strong>${catScoreBadge}</div>
+          ${spel.is_eindstand ? '' : `
+          <button class="joker-toggle-groot klein ${jokerHier?'aan':''} ${jokerElders?'uitgeschakeld':''}" ${gesloten||jokerElders?'disabled':''}
             onclick="toggleJoker('${spel.id}','${categorie}')" title="${jokerElders?'Joker al ingezet op een ander spel':'Zet joker in op dit spel (verdubbelt spelpunten)'}">
             ${jokerHier
               ? '🃏 Joker actief — punten tellen dubbel!'
               : jokerElders
                 ? `🃏 <span class="joker-tekst"><span>Joker ingezet bij</span><span>${(spellen.find(s=>s.id===deelnemer[jokerKolom])?.naam)||'een ander'} spel</span></span>`
                 : '🃏 <span class="joker-tekst"><span>Klik om Joker in te zetten</span><span>punten x2</span></span>'}
-          </button>
-        </div>`}
+          </button>`}
+        </div>
         <div class="top3-grid">
           <div><div class="top3-pos ${dubbel?'dubbel':''}">${top3PosLabel(1,dubbel)}</div>${comboHtml(1)}</div>
           <div><div class="top3-pos ${dubbel?'dubbel':''}">${top3PosLabel(2,dubbel)}</div>${comboHtml(2)}</div>
@@ -729,8 +782,7 @@ function renderSpelKaart(spel){
         ${spel.is_eindstand ? '<div class="eindstand-note">Voorspel de uiteindelijke eindstand (top 3) van de Feestweek — deze voorspelling telt <strong>dubbel</strong> mee en is uitgesloten van de joker.</div>' : ''}
         ${catBlok('heren')}
         ${catBlok('dames')}
-        ${gesloten ? '<div class="spel-locked-msg">De inzendtermijn voor dit spel is verstreken.</div>' :
-          `<div class="spel-footer"><button class="btn btn-gold btn-sm" onclick="slaSpelOp('${spel.id}')">Opslaan</button></div>`}
+        ${gesloten ? '<div class="spel-locked-msg">De inzendtermijn voor dit spel is verstreken.</div>' : ''}
       </div>
     </div>`;
 }
@@ -850,6 +902,77 @@ async function slaSpelOp(spelId){
   renderSupercup();
   herstelOpenInvoer(bewaardeInvoer);
 }
+
+// ── ÉÉN OPSLAAN-KNOP VOOR ALLE SPELLEN (Voorspellingen + Supercup) ──
+async function slaAllesOp(){
+  const balkKnop = document.querySelector('.invulbalk-acties .btn-gold');
+  if(balkKnop){ balkKnop.disabled = true; balkKnop.textContent = 'Opslaan...'; }
+
+  let opgeslagen = 0;
+  let foutmelding = null;
+  for(const spel of spellen){
+    const gesloten = new Date(spel.sluitingstijd).getTime() <= Date.now();
+    if(gesloten) continue;
+    for(const categorie of ['heren','dames']){
+      const wraps = Array.from(document.querySelectorAll(`.top3-combo[data-spel="${spel.id}"][data-cat="${categorie}"]`))
+        .sort((a,b)=>a.dataset.pos - b.dataset.pos);
+      if(!wraps.length) continue; // deze combinatie staat niet op het scherm gerenderd
+      const top3 = wraps.map(w=>w.querySelector('.top3-combo-value').value);
+      if(top3.some(v=>!v)) continue; // nog niet (volledig) ingevuld, overslaan
+
+      const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
+      const joker = !spel.is_eindstand && deelnemer && deelnemer[jokerKolom] === spel.id;
+
+      try{
+        const res = await fetch(`${SB_URL}/functions/v1/fw2026-opslaan-voorspelling`, {
+          method:'POST', headers: hdrs(true),
+          body: JSON.stringify({ spel_id: spel.id, categorie, top3, joker })
+        });
+        const data = await res.json();
+        if(!data.ok){ foutmelding = `${spel.naam} (${categorie}): ${data.error}`; continue; }
+        opgeslagen++;
+      }catch(e){
+        foutmelding = 'Netwerkfout bij opslaan.';
+      }
+    }
+  }
+
+  const bewaardeInvoer = leesOpenInvoer(); // invoer bij nog niet-complete velden niet kwijtraken
+  if(foutmelding){ toonToast(foutmelding, true); }
+  else if(opgeslagen){ toonToast(`${opgeslagen} voorspelling(en) opgeslagen!`); }
+  else{ toonToast('Niets nieuws om op te slaan.'); }
+
+  await laadEigenData();
+  renderSpellen();
+  renderSupercup();
+  herstelOpenInvoer(bewaardeInvoer);
+  updateInvulbalk();
+
+  if(balkKnop){ balkKnop.disabled = false; balkKnop.textContent = '💾 Alles opslaan'; }
+}
+
+// ── VOORTGANG VOOR DE STICKY INVULBALK ──
+function berekenVoortgang(){
+  let compleet = 0, totaal = 0;
+  spellen.forEach(s=>{
+    ['heren','dames'].forEach(cat=>{
+      totaal++;
+      if(isTop3Compleet(s.id, cat)) compleet++;
+    });
+  });
+  return { compleet, totaal };
+}
+function updateInvulbalk(){
+  const el = document.getElementById('invulbalk-progress');
+  if(!el) return;
+  const { compleet, totaal } = berekenVoortgang();
+  el.textContent = `📋 ${compleet}/${totaal} ingevuld`;
+}
+function gaNaarSupercup(){
+  const tabEl = document.querySelector('.tab[data-tab="supercup"]');
+  if(tabEl) wisselTab(tabEl);
+}
+
 
 // ── BONUSVRAGEN (placeholder) ──
 function renderBonus(){
@@ -1061,6 +1184,7 @@ async function startApp(){
   renderSupercup();
   renderBonus();
   renderTussenstand(); // eerste/standaard tabblad
+  updateInvulbalk();
 }
 
 (async function init(){
@@ -1080,6 +1204,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
