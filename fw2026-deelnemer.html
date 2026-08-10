@@ -86,10 +86,17 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 
 /* VOORBLAD */
 .vb-wrap{max-width:660px;margin:0 auto;}
-.vb-hero{text-align:center;margin-bottom:20px;}
-.vb-hero h2{font-family:'Rye',cursive;font-size:26px;color:var(--green);}
-.vb-hero .sub{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:6px 0 12px;}
-.vb-hero p{font-size:14px;color:var(--text2);line-height:1.7;}
+.vb-hero{display:flex;gap:24px;align-items:flex-start;margin-bottom:24px;text-align:left;}
+.vb-hero-text h2{font-family:'Rye',cursive;font-size:26px;color:var(--green);line-height:1.2;}
+.vb-hero-text .sub{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:6px 0 12px;}
+.vb-hero-text p{font-size:14px;color:var(--text2);line-height:1.7;}
+.vb-logo-img{width:160px;height:160px;flex-shrink:0;border-radius:14px;object-fit:cover;box-shadow:0 8px 28px rgba(0,0,0,.25);border:3px solid rgba(201,168,76,.3);cursor:zoom-in;}
+.logo-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.logo-lightbox img{max-width:90vw;max-height:90vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);border:3px solid rgba(255,255,255,.15);}
+@media(max-width:560px){
+  .vb-hero{flex-direction:column;align-items:center;text-align:center;}
+  .vb-logo-img{width:130px;height:130px;}
+}
 .vb-box{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .vb-box h3{font-family:'Playfair Display',serif;font-size:16px;font-weight:900;color:var(--green);margin-bottom:10px;border-bottom:1px solid var(--bg2);padding-bottom:7px;}
 .vb-box h3::before{content:'★ ';color:var(--red);font-size:13px;}
@@ -331,9 +338,15 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
     <section class="section" id="sectie-voorblad">
       <div class="vb-wrap">
         <div class="vb-hero">
-          <h2>Freddy's Angels</h2>
-          <div class="sub">★ Feestweek 2026 Pool ★ &nbsp;·&nbsp; 7–11 september</div>
-          <p>Welkom bij de Freddy's Angels Feestweek Pool! Voorspel elke dag de top 3 van heren én dames en verzamel punten voor de gecombineerde eindstand.</p>
+          <img src="https://hetcbiybjdsjkusrqocl.supabase.co/storage/v1/object/public/Afbeeldingen/Freddys%20Angels%20Feestweek.png" alt="Freddy's Angels Feestweek 2026 Pool" class="vb-logo-img" onclick="openLogoLightbox(this.src)">
+          <div class="vb-hero-text">
+            <h2>Freddy's Angels</h2>
+            <div class="sub">★ Feestweek 2026 Pool ★ &nbsp;·&nbsp; 7–11 september</div>
+            <p>Welkom bij de Freddy's Angels Feestweek Pool! Voorspel elke dag de top 3 van heren én dames en verzamel punten voor de gecombineerde eindstand.</p>
+            <div style="margin-top:12px">
+              <button class="btn btn-gold" onclick="gaNaarTab('voorspellingen')" style="font-size:15px;padding:12px 28px">🪔 Begin met Invullen →</button>
+            </div>
+          </div>
         </div>
         <div class="sr-kaart">
           <div class="sr-header">
@@ -968,9 +981,22 @@ function updateInvulbalk(){
   const { compleet, totaal } = berekenVoortgang();
   el.textContent = `📋 ${compleet}/${totaal} ingevuld`;
 }
-function gaNaarSupercup(){
-  const tabEl = document.querySelector('.tab[data-tab="supercup"]');
+function gaNaarTab(naam){
+  const tabEl = document.querySelector(`.tab[data-tab="${naam}"]`);
   if(tabEl) wisselTab(tabEl);
+}
+function gaNaarSupercup(){
+  gaNaarTab('supercup');
+}
+function openLogoLightbox(src){
+  const lb = document.createElement('div');
+  lb.className = 'logo-lightbox';
+  lb.innerHTML = `<img src="${src}" alt="Freddy's Angels logo">`;
+  lb.addEventListener('click', () => lb.remove());
+  document.addEventListener('keydown', function esc(e){
+    if(e.key === 'Escape'){ lb.remove(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(lb);
 }
 
 
@@ -1204,6 +1230,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
