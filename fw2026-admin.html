@@ -178,18 +178,20 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
       <div class="sec-title">Teams</div>
       <div class="sec-sub">Teamlijst per categorie (heren/dames), gebruikt voor voorspellingen én registratie.</div>
       <div class="card">
-        <h3>Nieuw team</h3>
+        <h3 id="team-form-titel">Nieuw team</h3>
+        <input type="hidden" id="team-id" value="">
         <div class="form-row">
           <input type="text" id="team-naam" placeholder="Teamnaam">
           <select id="team-categorie"><option value="heren">Heren</option><option value="dames">Dames</option></select>
           <input type="number" id="team-volgorde" placeholder="Volgorde" style="max-width:100px">
-          <button class="btn btn-gold btn-sm" onclick="voegTeamToe()">+ Toevoegen</button>
+          <button class="btn btn-gold btn-sm" onclick="voegTeamToe()" id="team-submit-btn">+ Toevoegen</button>
+          <button class="btn btn-outline btn-sm" onclick="annuleerTeamBewerken()" id="team-annuleer-btn" style="display:none">Annuleren</button>
         </div>
       </div>
       <div class="card">
         <table class="beheer">
-          <thead><tr><th>Naam</th><th>Categorie</th><th>Volgorde</th><th></th></tr></thead>
-          <tbody id="teams-tbody"><tr><td colspan="4" class="loading">Laden...</td></tr></tbody>
+          <thead><tr><th>Naam</th><th>Categorie</th><th>Volgorde</th><th></th><th></th></tr></thead>
+          <tbody id="teams-tbody"><tr><td colspan="5" class="loading">Laden...</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -371,25 +373,50 @@ async function adminActie(actie, data){
 // ── TEAMS ──
 function renderTeams(){
   const tbody = document.getElementById('teams-tbody');
-  if(!teams.length){ tbody.innerHTML = '<tr><td colspan="4" class="loading">Nog geen teams.</td></tr>'; return; }
+  if(!teams.length){ tbody.innerHTML = '<tr><td colspan="5" class="loading">Nog geen teams.</td></tr>'; return; }
   tbody.innerHTML = teams.map(t=>`
     <tr>
       <td>${t.naam}</td>
       <td><span class="badge ${t.categorie}">${t.categorie}</span></td>
       <td>${t.volgorde}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="bewerkTeam('${t.id}')">Bewerk</button></td>
       <td><button class="btn btn-danger btn-sm" onclick="verwijderTeam('${t.id}')">Verwijder</button></td>
     </tr>`).join('');
 }
+function bewerkTeam(id){
+  const t = teams.find(x=>x.id===id);
+  if(!t) return;
+  document.getElementById('team-id').value = t.id;
+  document.getElementById('team-naam').value = t.naam || '';
+  document.getElementById('team-categorie').value = t.categorie;
+  document.getElementById('team-volgorde').value = t.volgorde ?? '';
+  document.getElementById('team-form-titel').textContent = `Team bewerken — ${t.naam}`;
+  document.getElementById('team-submit-btn').textContent = '💾 Wijzigen opslaan';
+  document.getElementById('team-annuleer-btn').style.display = '';
+  document.querySelector('#sectie-teams .card').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function annuleerTeamBewerken(){
+  document.getElementById('team-id').value = '';
+  document.getElementById('team-naam').value = '';
+  document.getElementById('team-categorie').value = 'heren';
+  document.getElementById('team-volgorde').value = '';
+  document.getElementById('team-form-titel').textContent = 'Nieuw team';
+  document.getElementById('team-submit-btn').textContent = '+ Toevoegen';
+  document.getElementById('team-annuleer-btn').style.display = 'none';
+}
 async function voegTeamToe(){
+  const id = document.getElementById('team-id').value || undefined;
   const naam = document.getElementById('team-naam').value.trim();
   const categorie = document.getElementById('team-categorie').value;
   const volgorde = parseInt(document.getElementById('team-volgorde').value) || 0;
   if(!naam){ toonToast('Vul een teamnaam in.', true); return; }
-  const res = await adminActie('upsert_team', { naam, categorie, volgorde });
+  const res = await adminActie('upsert_team', { id, naam, categorie, volgorde });
   if(res.ok){
-    document.getElementById('team-naam').value=''; document.getElementById('team-volgorde').value='';
-    toonToast('Team toegevoegd.');
+    toonToast(id ? 'Team bijgewerkt.' : 'Team toegevoegd.');
+    annuleerTeamBewerken();
     await laadAlles(); renderTeams();
+  } else {
+    toonToast(res.error, true);
   }
 }
 async function verwijderTeam(id){
@@ -765,5 +792,6 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
