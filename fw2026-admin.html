@@ -175,7 +175,7 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 
     <!-- TEAMS -->
     <section class="section" id="sectie-teams">
-      <div class="sec-title">Teams</div>
+      <div class="sec-title">Teams <span id="team-count" style="font-size:16px;color:var(--muted);font-family:'DM Mono',monospace"></span></div>
       <div class="sec-sub">Teamlijst per categorie (heren/dames), gebruikt voor voorspellingen én registratie.</div>
       <div class="card">
         <h3 id="team-form-titel">Nieuw team</h3>
@@ -187,6 +187,12 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
           <button class="btn btn-gold btn-sm" onclick="voegTeamToe()" id="team-submit-btn">+ Toevoegen</button>
           <button class="btn btn-outline btn-sm" onclick="annuleerTeamBewerken()" id="team-annuleer-btn" style="display:none">Annuleren</button>
         </div>
+      </div>
+      <div class="dl-filterbar">
+        <input type="search" class="dl-search" id="team-zoek" placeholder="🔍 Zoek team..." oninput="filterTeams()">
+        <button class="dl-filter-btn active" id="team-filter-alle" onclick="setTeamFilter('alle',this)">Alle</button>
+        <button class="dl-filter-btn" id="team-filter-heren" onclick="setTeamFilter('heren',this)">Heren</button>
+        <button class="dl-filter-btn" id="team-filter-dames" onclick="setTeamFilter('dames',this)">Dames</button>
       </div>
       <div class="card">
         <table class="beheer">
@@ -371,10 +377,30 @@ async function adminActie(actie, data){
 }
 
 // ── TEAMS ──
+let teamZoek = '';
+let teamFilterCategorie = 'alle';
+function setTeamFilter(cat, btn){
+  teamFilterCategorie = cat;
+  document.querySelectorAll('#sectie-teams .dl-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTeams();
+}
+function filterTeams(){
+  teamZoek = (document.getElementById('team-zoek')?.value || '').toLowerCase();
+  renderTeams();
+}
 function renderTeams(){
   const tbody = document.getElementById('teams-tbody');
+  let gefilterd = teams;
+  if(teamFilterCategorie !== 'alle') gefilterd = gefilterd.filter(t=>t.categorie === teamFilterCategorie);
+  if(teamZoek) gefilterd = gefilterd.filter(t=>t.naam.toLowerCase().includes(teamZoek));
+
+  const countEl = document.getElementById('team-count');
+  if(countEl) countEl.textContent = `(${gefilterd.length}/${teams.length})`;
+
   if(!teams.length){ tbody.innerHTML = '<tr><td colspan="5" class="loading">Nog geen teams.</td></tr>'; return; }
-  tbody.innerHTML = teams.map(t=>`
+  if(!gefilterd.length){ tbody.innerHTML = '<tr><td colspan="5" class="loading">Geen teams gevonden.</td></tr>'; return; }
+  tbody.innerHTML = gefilterd.map(t=>`
     <tr>
       <td>${t.naam}</td>
       <td><span class="badge ${t.categorie}">${t.categorie}</span></td>
