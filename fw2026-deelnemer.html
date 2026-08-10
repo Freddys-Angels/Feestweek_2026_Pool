@@ -119,6 +119,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .pos-score-badge{font-size:10px;font-weight:700;margin-top:4px;padding:2px 6px;border-radius:4px;text-align:center;}
 .pos-score-badge.ok{color:var(--green);background:rgba(43,122,66,.12);}
 .pos-score-badge.nul{color:var(--muted);background:var(--bg3);}
+.pos-correct-badge{font-size:10px;font-weight:600;margin-top:3px;padding:2px 6px;border-radius:4px;text-align:center;color:var(--gold);background:var(--gold3);}
 .joker-row{display:flex;justify-content:center;margin:4px 0 14px;}
 .joker-toggle-groot{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--gold);cursor:pointer;border:2px solid var(--gold2);padding:10px 26px;border-radius:26px;background:var(--gold3);transition:all .18s;letter-spacing:.2px;}
 .joker-toggle-groot:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.35);}
@@ -640,9 +641,10 @@ function berekenCategorieScore(spel, categorie){
   const voorspeld = voorspelling?.predictions?.[spel.id]?.[categorie];
   const actueel = uitslagen.filter(u=>u.spel_id===spel.id && u.categorie===categorie);
   if(!actueel.length) return null; // uitslag nog niet bekend
-  if(!voorspeld) return { totaal:0, perPositie:{1:0,2:0,3:0}, ingevuld:false };
 
   const actueelMap = {}; actueel.forEach(u=>actueelMap[u.positie]=u.team_id);
+  if(!voorspeld) return { totaal:0, perPositie:{1:0,2:0,3:0}, actueelMap, ingevuld:false };
+
   const actueleTop3 = Object.values(actueelMap);
   const bonusPerPositie = {1:5,2:3,3:2};
   const jokerKolom = categorie==='heren' ? 'joker_heren_spel_id' : 'joker_dames_spel_id';
@@ -661,7 +663,7 @@ function berekenCategorieScore(spel, categorie){
     perPositie[pos] = p;
     totaal += p;
   });
-  return { totaal, perPositie, ingevuld:true };
+  return { totaal, perPositie, actueelMap, ingevuld:true };
 }
 
 function renderSpelKaart(spel){
@@ -681,11 +683,15 @@ function renderSpelKaart(spel){
       const huidigNaam = huidigId ? (opties.find(t=>t.id===huidigId)?.naam || '') : '';
       const behaald = score ? score.perPositie[positie] : null;
       const behaaldBadge = behaald===null ? '' : `<div class="pos-score-badge ${behaald>0?'ok':'nul'}">${behaald>0 ? `✓ ${behaald}pt behaald` : '0pt behaald'}</div>`;
+      const correcteTeamId = score?.actueelMap?.[positie];
+      const correcteTeamNaam = correcteTeamId ? (opties.find(t=>t.id===correcteTeamId)?.naam || '') : '';
+      const correctBadge = correcteTeamNaam ? `<div class="pos-correct-badge">Correcte team: ${correcteTeamNaam}</div>` : '';
       return `<div class="combo top3-combo" data-spel="${spel.id}" data-cat="${categorie}" data-pos="${positie}">
         <input type="text" class="combo-input top3-combo-input" ${gesloten?'disabled':''} placeholder="Typ een team..." value="${huidigNaam}" autocomplete="off">
         <input type="hidden" class="top3-combo-value" value="${huidigId}">
         <div class="combo-list"></div>
         ${behaaldBadge}
+        ${correctBadge}
       </div>`;
     };
 
@@ -1074,6 +1080,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
