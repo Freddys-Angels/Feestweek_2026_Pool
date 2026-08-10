@@ -279,8 +279,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
   </header>
 
   <nav class="tabs">
-    <div class="tab active" data-tab="tussenstand" onclick="wisselTab(this)">📈 Tussenstand</div>
-    <div class="tab" data-tab="voorblad" onclick="wisselTab(this)">🏠 Voorblad</div>
+    <div class="tab" data-tab="tussenstand" onclick="wisselTab(this)">📈 Tussenstand</div>
+    <div class="tab active" data-tab="voorblad" onclick="wisselTab(this)">🏠 Voorblad</div>
     <div class="tab" data-tab="voorspellingen" onclick="wisselTab(this)">🎯 Voorspellingen</div>
     <div class="tab" data-tab="supercup" onclick="wisselTab(this)">🏆 Supercup</div>
     <div class="tab" data-tab="bonus" onclick="wisselTab(this)">⭐ Bonusvragen</div>
@@ -298,7 +298,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
   <div class="content">
 
     <!-- TUSSENSTAND -->
-    <section class="section active" id="sectie-tussenstand">
+    <section class="section" id="sectie-tussenstand">
       <div class="sec-title">Tussenstand</div>
       <div class="sec-sub">De actuele ranglijst — individueel of per team.</div>
 
@@ -335,7 +335,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
     </section>
 
     <!-- VOORBLAD -->
-    <section class="section" id="sectie-voorblad">
+    <section class="section active" id="sectie-voorblad">
       <div class="vb-wrap">
         <div class="vb-hero">
           <img src="https://hetcbiybjdsjkusrqocl.supabase.co/storage/v1/object/public/Afbeeldingen/Freddys%20Angels%20Feestweek.png" alt="Freddy's Angels Feestweek 2026 Pool" class="vb-logo-img" onclick="openLogoLightbox(this.src)">
@@ -1209,8 +1209,16 @@ async function startApp(){
   renderSpellen();
   renderSupercup();
   renderBonus();
-  renderTussenstand(); // eerste/standaard tabblad
+  renderTussenstand();
   updateInvulbalk();
+
+  // Standaard tabblad: vóór de start van de Feestweek (7 september 2026) opent de
+  // app op het Voorblad; vanaf die dag opent de app standaard op de Tussenstand.
+  const FEESTWEEK_START = new Date('2026-09-07T00:00:00');
+  if(new Date() >= FEESTWEEK_START){
+    const tussenstandTab = document.querySelector('.tab[data-tab="tussenstand"]');
+    if(tussenstandTab) wisselTab(tussenstandTab);
+  }
 }
 
 (async function init(){
@@ -1230,6 +1238,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
