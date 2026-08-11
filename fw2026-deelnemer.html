@@ -158,6 +158,9 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .bonus-kaart{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;flex-direction:column;gap:10px;}
 .bonus-vraag{font-size:13px;font-weight:700;color:var(--text);line-height:1.4;min-height:36px;}
 .bonus-getal-input{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:9px 10px;border-radius:6px;font-size:14px;}
+.bonus-pil{font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:20px;text-align:center;line-height:1.5;}
+.bonus-pil.ok{color:var(--green);background:rgba(43,122,66,.12);}
+.bonus-pil.nok{color:var(--red);background:rgba(180,50,50,.1);}
 @media(max-width:820px){.bonus-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:560px){.bonus-grid{grid-template-columns:1fr;}}
 .joker-row{display:flex;justify-content:center;margin:4px 0 14px;}
@@ -1031,6 +1034,34 @@ function bonusOpties(vraag){
   if(cfg.categorie === 'alle') return teams;
   return teams.filter(t=>t.categorie === cfg.categorie);
 }
+// Berekent, zodra de admin een correct antwoord heeft ingevuld, of/hoeveel punten
+// de deelnemer heeft gescoord op een bonusvraag.
+function berekenBonusScore(vraag){
+  const correctRuw = (vraag.correct_antwoord || '').trim();
+  if(!correctRuw) return null; // nog geen correct antwoord bekend
+
+  const cfg = BONUS_INPUT_CONFIG[vraag.volgorde] || { type: 'getal' };
+  const eigenAntwoord = voorspelling?.bonus_antwoorden?.[vraag.id] ?? '';
+  const basispunten = vraag.punten ?? 10;
+
+  if(cfg.type === 'getal'){
+    const correct = parseFloat(correctRuw);
+    if(isNaN(correct)) return null;
+    if(eigenAntwoord === '' || isNaN(parseFloat(eigenAntwoord))){
+      return { antwoordTekst: correctRuw, ingevuld: false, goed: false, punten: 0 };
+    }
+    const eigen = parseFloat(eigenAntwoord);
+    const afwijking = Math.round(Math.abs(eigen - correct));
+    const punten = Math.max(0, basispunten - afwijking);
+    return { antwoordTekst: correctRuw, ingevuld: true, goed: afwijking === 0, punten, afwijking };
+  }
+
+  // Teamvraag: vergelijk op teamnaam (correct antwoord is vrije tekst door admin ingevuld)
+  const eigenNaam = eigenAntwoord ? (teams.find(t=>t.id===eigenAntwoord)?.naam || '') : '';
+  const ingevuld = !!eigenNaam;
+  const goed = ingevuld && eigenNaam.trim().toLowerCase() === correctRuw.toLowerCase();
+  return { antwoordTekst: correctRuw, ingevuld, goed, punten: goed ? basispunten : 0 };
+}
 function renderBonus(){
   const wrap = document.getElementById('bonus-lijst');
   if(!bonusvragen.length){
@@ -1053,9 +1084,16 @@ function renderBonus(){
         <div class="combo-list"></div>
       </div>`;
     }
+    const score = berekenBonusScore(v);
+    const pilHtml = score ? `<div class="bonus-pil ${score.goed ? 'ok' : 'nok'}">
+      Correct antwoord: <strong>${score.antwoordTekst}</strong>
+      ${score.ingevuld ? (score.goed ? ' ✓' : ' ✗') : ' (niet ingevuld)'}
+      — <strong>${score.punten}pt</strong>
+    </div>` : '';
     return `<div class="bonus-kaart">
       <div class="bonus-vraag">${v.vraag}</div>
       ${inputHtml}
+      ${pilHtml}
     </div>`;
   }).join('');
   wrap.innerHTML = `<div class="bonus-grid">${kaarten}</div>`;
@@ -1399,6 +1437,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
