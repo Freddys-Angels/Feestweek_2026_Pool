@@ -795,24 +795,38 @@ async function berekenStand(){
   finally{ btn.disabled=false; btn.textContent='★ Bereken & Publiceer Stand'; }
 }
 function renderStand(leaderboard){
-  const kolomAantal = 4 + (leaderboard?.spellen?.length || 0);
-  if(!leaderboard || !leaderboard.rijen?.length){
-    document.getElementById('stand-tbody').innerHTML = `<tr><td colspan="${kolomAantal}" class="loading">Nog geen data om te berekenen.</td></tr>`;
+  // Deelnemers die zich ná de laatste berekening (of vóór de eerste) hebben
+  // aangemeld staan nog niet in de gepubliceerde rijen — die vullen we hier aan
+  // met 0 punten, zodat iedere aanmelding direct in de tussenstand verschijnt.
+  // De score zelf klopt weer zodra opnieuw op "Bereken & Publiceer Stand" is geklikt.
+  const spelIds = leaderboard?.spellen?.map(s=>s.id) || spellen.map(s=>s.id);
+  const bekendeIds = new Set((leaderboard?.rijen || []).map(r=>r.deelnemer_id));
+  const aangevuld = [...(leaderboard?.rijen || [])];
+  deelnemers.forEach(d=>{
+    if(bekendeIds.has(d.id)) return;
+    const perSpel = {}; spelIds.forEach(id=>perSpel[id]=0);
+    aangevuld.push({ deelnemer_id: d.id, naam: d.naam, team_id: d.team_id, per_spel: perSpel, bonus_punten: 0, totaal: 0 });
+  });
+  aangevuld.sort((a,b)=>(b.totaal||0) - (a.totaal||0));
+
+  const kolomAantal = 4 + spelIds.length;
+  if(!aangevuld.length){
+    document.getElementById('stand-tbody').innerHTML = `<tr><td colspan="${kolomAantal}" class="loading">Nog geen deelnemers.</td></tr>`;
     return;
   }
-  document.getElementById('ov-deelnemers').textContent = leaderboard.rijen.length;
-  document.getElementById('ov-laatst').textContent = new Date(leaderboard.gegenereerd_op).toLocaleString('nl-NL');
-  document.getElementById('ov-leider').textContent = leaderboard.rijen[0]?.naam || '—';
+  document.getElementById('ov-deelnemers').textContent = aangevuld.length;
+  document.getElementById('ov-laatst').textContent = leaderboard?.gegenereerd_op ? new Date(leaderboard.gegenereerd_op).toLocaleString('nl-NL') : 'Nog niet berekend';
+  document.getElementById('ov-leider').textContent = aangevuld[0]?.totaal > 0 ? aangevuld[0].naam : '—';
 
-  const spelIds = leaderboard.spellen.map(s=>s.id);
+  const spelKoppen = leaderboard?.spellen || spellen;
   document.getElementById('stand-thead').innerHTML = `<tr>
     <th>#</th><th>Naam</th>
-    ${leaderboard.spellen.map(s=>`<th>${s.is_eindstand ? '🏆 ' + s.naam : s.naam}</th>`).join('')}
+    ${spelKoppen.map(s=>`<th>${s.is_eindstand ? '🏆 ' + s.naam : s.naam}</th>`).join('')}
     <th>Bonus</th><th>Totaal</th>
   </tr>`;
-  document.getElementById('stand-tbody').innerHTML = leaderboard.rijen.map((r,i)=>`
+  document.getElementById('stand-tbody').innerHTML = aangevuld.map((r,i)=>`
     <tr>
-      <td class="kl-rank">${i+1}</td>
+      <td class="kl-rank">${r.totaal>0 ? i+1 : '—'}</td>
       <td>${r.naam}</td>
       ${spelIds.map(id=>`<td>${r.per_spel[id]||0}</td>`).join('')}
       <td>${r.bonus_punten}</td>
@@ -822,8 +836,8 @@ function renderStand(leaderboard){
 async function laadGecachetStand(){
   const res = await fetch(`${SB_URL}/rest/v1/admin_data?select=data&id=eq.singleton`, { headers: hdrs(true) });
   const arr = await res.json();
-  const leaderboard = arr[0]?.data?.leaderboard;
-  if(leaderboard) renderStand(leaderboard);
+  const leaderboard = arr[0]?.data?.leaderboard || null;
+  renderStand(leaderboard);
 }
 
 async function startApp(){
@@ -845,6 +859,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
