@@ -301,7 +301,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
   <div class="invulbalk" id="invulbalk">
     <div class="invulbalk-progress" id="invulbalk-progress">📋 0/0 ingevuld</div>
     <div class="invulbalk-acties">
-      <button class="btn btn-outline btn-sm" id="invulbalk-supercup-btn" onclick="gaNaarSupercup()">🏆 Door naar Supercup →</button>
+      <button class="btn btn-outline btn-sm" id="invulbalk-supercup-btn" onclick="gaNaarTab('supercup')">🏆 Door naar Supercup →</button>
+      <button class="btn btn-outline btn-sm" id="invulbalk-bonus-btn" onclick="gaNaarTab('bonus')">⭐ Door naar Bonusvragen →</button>
       <button class="btn btn-gold btn-sm" onclick="slaAllesOp()">💾 Alles opslaan</button>
     </div>
   </div>
@@ -368,7 +369,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
             <div class="sr-item"><span class="sr-item-arrow">→</span><span>Voorspel voor de vijf feestweekspellen de top 3 voor zowel de heren als het dames klassement.</span></div>
             <div class="sr-item"><span class="sr-item-arrow">→</span><span>Bij zowel de dames als de heren mag er 1x een joker worden ingezet. Zoals gebruikelijk verdubbelt deze joker de punten die je behaalt bij dat spel.</span></div>
             <div class="sr-item"><span class="sr-item-arrow">→</span><span>Naast de spellen moet ook de top 3 voor de Supercup worden voorspeld. Ga hiervoor naar tabblad 'Supercup'.</span></div>
-            <div class="sr-item"><span class="sr-item-arrow">→</span><span>Alles vul je in één keer vooraf in: alle spellen én de Supercup-voorspelling.</span></div>
+            <div class="sr-item"><span class="sr-item-arrow">→</span><span>Vergeet ook de bonusvragen niet — die vind je op tabblad 'Bonusvragen'.</span></div>
+            <div class="sr-item"><span class="sr-item-arrow">→</span><span>Alles vul je in één keer vooraf in: alle spellen, de Supercup-voorspelling én de bonusvragen.</span></div>
             <div class="sr-warning">⚠️ <span>Alle voorspellingen sluiten gelijktijdig op maandag 19:00 uur, het moment waarop het eerste spel begint. Na sluiting kunnen voorspellingen niet meer worden aangepast.</span></div>
           </div>
         </div>
@@ -426,9 +428,6 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <div class="sec-title">Bonusvragen</div>
       <div class="sec-sub">Beantwoord de bonusvragen over het weekthema. Bij teamvragen kun je typen om te zoeken.</div>
       <div id="bonus-lijst"><div class="loading">Nog geen bonusvragen beschikbaar.</div></div>
-      <div style="margin-top:16px;text-align:right">
-        <button class="btn btn-gold" onclick="slaBonusOp()">💾 Antwoorden opslaan</button>
-      </div>
     </section>
 
     <!-- OVERZICHT (checklist) -->
@@ -615,10 +614,12 @@ function wisselTab(el){
   if(el.dataset.tab === 'overzicht') renderChecklist();
 
   const balk = document.getElementById('invulbalk');
-  const toonBalk = el.dataset.tab === 'voorspellingen' || el.dataset.tab === 'supercup';
+  const toonBalk = el.dataset.tab === 'voorspellingen' || el.dataset.tab === 'supercup' || el.dataset.tab === 'bonus';
   balk.style.display = toonBalk ? 'grid' : 'none';
   const supercupKnop = document.getElementById('invulbalk-supercup-btn');
-  if(supercupKnop) supercupKnop.style.display = el.dataset.tab === 'supercup' ? 'none' : '';
+  if(supercupKnop) supercupKnop.style.display = el.dataset.tab === 'voorspellingen' ? '' : 'none';
+  const bonusKnop = document.getElementById('invulbalk-bonus-btn');
+  if(bonusKnop) bonusKnop.style.display = el.dataset.tab === 'bonus' ? 'none' : '';
   if(toonBalk) updateInvulbalk();
 }
 
@@ -968,15 +969,40 @@ async function slaAllesOp(){
     }
   }
 
+  // Bonusantwoorden horen bij dezelfde "1 opslaan-knop"-ervaring, dus in dezelfde actie meenemen.
+  let bonusOpgeslagen = false;
+  const bonusAntwoorden = {};
+  document.querySelectorAll('.bonus-combo').forEach(wrap=>{
+    bonusAntwoorden[wrap.dataset.bonus] = wrap.querySelector('.bonus-combo-value').value || '';
+  });
+  document.querySelectorAll('.bonus-getal-input').forEach(inp=>{
+    bonusAntwoorden[inp.dataset.bonus] = inp.value || '';
+  });
+  if(Object.keys(bonusAntwoorden).length){
+    try{
+      const res = await fetch(`${SB_URL}/functions/v1/fw2026-opslaan-bonusantwoorden`, {
+        method:'POST', headers: hdrs(true), body: JSON.stringify({ antwoorden: bonusAntwoorden }),
+      });
+      const data = await res.json().catch(()=>null);
+      if(!res.ok || !data || !data.ok){ foutmelding = data?.error || 'Kon bonusantwoorden niet opslaan.'; }
+      else bonusOpgeslagen = true;
+    }catch(e){
+      foutmelding = 'Netwerkfout bij opslaan van bonusantwoorden.';
+    }
+  }
+
   const bewaardeInvoer = leesOpenInvoer(); // invoer bij nog niet-complete velden niet kwijtraken
+  const bewaardeBonusInvoer = leesOpenBonusInvoer();
   if(foutmelding){ toonToast(foutmelding, true); }
-  else if(opgeslagen){ toonToast(`${opgeslagen} voorspelling(en) opgeslagen!`); }
+  else if(opgeslagen || bonusOpgeslagen){ toonToast('Opgeslagen!'); }
   else{ toonToast('Niets nieuws om op te slaan.'); }
 
   await laadEigenData();
   renderSpellen();
   renderSupercup();
+  renderBonus();
   herstelOpenInvoer(bewaardeInvoer);
+  herstelOpenBonusInvoer(bewaardeBonusInvoer);
   updateInvulbalk();
 
   if(balkKnop){ balkKnop.disabled = false; balkKnop.textContent = '💾 Alles opslaan'; }
@@ -984,27 +1010,31 @@ async function slaAllesOp(){
 
 // ── VOORTGANG VOOR DE STICKY INVULBALK ──
 function berekenVoortgang(){
-  let compleet = 0, totaal = 0;
+  let spellenCompleet = 0, spellenTotaal = 0;
+  let supercupCompleet = 0, supercupTotaal = 0;
   spellen.forEach(s=>{
     ['heren','dames'].forEach(cat=>{
-      totaal++;
-      if(isTop3Compleet(s.id, cat)) compleet++;
+      const compleet = isTop3Compleet(s.id, cat);
+      if(s.is_eindstand){ supercupTotaal++; if(compleet) supercupCompleet++; }
+      else{ spellenTotaal++; if(compleet) spellenCompleet++; }
     });
   });
-  return { compleet, totaal };
+  const bonusTotaal = bonusvragen.length;
+  const bonusCompleet = bonusvragen.filter(v=>{
+    const antwoord = voorspelling?.bonus_antwoorden?.[v.id];
+    return antwoord !== undefined && antwoord !== null && String(antwoord).trim() !== '';
+  }).length;
+  return { spellenCompleet, spellenTotaal, supercupCompleet, supercupTotaal, bonusCompleet, bonusTotaal };
 }
 function updateInvulbalk(){
   const el = document.getElementById('invulbalk-progress');
   if(!el) return;
-  const { compleet, totaal } = berekenVoortgang();
-  el.textContent = `📋 ${compleet}/${totaal} ingevuld`;
+  const v = berekenVoortgang();
+  el.textContent = `Spellen ${v.spellenCompleet}/${v.spellenTotaal} · Supercup ${v.supercupCompleet}/${v.supercupTotaal} · Bonusvragen ${v.bonusCompleet}/${v.bonusTotaal}`;
 }
 function gaNaarTab(naam){
   const tabEl = document.querySelector(`.tab[data-tab="${naam}"]`);
   if(tabEl) wisselTab(tabEl);
-}
-function gaNaarSupercup(){
-  gaNaarTab('supercup');
 }
 function openLogoLightbox(src){
   const lb = document.createElement('div');
@@ -1438,6 +1468,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
