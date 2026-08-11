@@ -152,6 +152,14 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .pos-score-badge.ok{color:var(--green);background:rgba(43,122,66,.12);}
 .pos-score-badge.nul{color:var(--muted);background:var(--bg3);}
 .pos-correct-badge{font-size:10px;font-weight:600;margin-top:3px;padding:2px 6px;border-radius:4px;text-align:center;color:var(--gold);background:var(--gold3);}
+
+/* BONUSVRAGEN */
+.bonus-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.bonus-kaart{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;flex-direction:column;gap:10px;}
+.bonus-vraag{font-size:13px;font-weight:700;color:var(--text);line-height:1.4;min-height:36px;}
+.bonus-getal-input{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:9px 10px;border-radius:6px;font-size:14px;}
+@media(max-width:820px){.bonus-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.bonus-grid{grid-template-columns:1fr;}}
 .joker-row{display:flex;justify-content:center;margin:4px 0 14px;}
 .joker-toggle-groot{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--gold);cursor:pointer;border:2px solid var(--gold2);padding:10px 26px;border-radius:26px;background:var(--gold3);transition:all .18s;letter-spacing:.2px;}
 .joker-toggle-groot:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 4px 14px rgba(201,168,76,.35);}
@@ -412,8 +420,11 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
     <!-- BONUSVRAGEN -->
     <section class="section" id="sectie-bonus">
       <div class="sec-title">Bonusvragen</div>
-      <div class="sec-sub">Het weekthema en de bonusvragen worden later toegevoegd.</div>
+      <div class="sec-sub">Beantwoord de bonusvragen over het weekthema. Bij teamvragen kun je typen om te zoeken.</div>
       <div id="bonus-lijst"><div class="loading">Nog geen bonusvragen beschikbaar.</div></div>
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn btn-gold" onclick="slaBonusOp()">💾 Antwoorden opslaan</button>
+      </div>
     </section>
 
     <!-- OVERZICHT (checklist) -->
@@ -1000,14 +1011,138 @@ function openLogoLightbox(src){
 }
 
 
-// ── BONUSVRAGEN (placeholder) ──
+// ── BONUSVRAGEN ──
+// Per bonusvraag (o.b.v. volgorde) welk soort invoerveld en welke teams toegestaan zijn.
+const BONUS_INPUT_CONFIG = {
+  1: { type: 'team', categorie: 'heren' },
+  2: { type: 'team', categorie: 'dames' },
+  3: { type: 'team', categorie: 'dames' },
+  4: { type: 'team', categorie: 'heren' },
+  5: { type: 'getal' },
+  6: { type: 'team', namen: ['Biermusketiers', 'Vrijgezellig', 'Nachtbrakers'] },
+  7: { type: 'team', categorie: 'alle' },
+  8: { type: 'team', categorie: 'alle' },
+};
+function bonusOpties(vraag){
+  const cfg = BONUS_INPUT_CONFIG[vraag.volgorde];
+  if(!cfg || cfg.type !== 'team') return [];
+  if(cfg.namen) return cfg.namen.map(naam => teams.find(t=>t.naam===naam)).filter(Boolean);
+  if(cfg.categorie === 'alle') return teams;
+  return teams.filter(t=>t.categorie === cfg.categorie);
+}
 function renderBonus(){
   const wrap = document.getElementById('bonus-lijst');
   if(!bonusvragen.length){
     wrap.innerHTML = '<div class="loading">Nog geen bonusvragen beschikbaar. Kom later terug!</div>';
     return;
   }
-  wrap.innerHTML = bonusvragen.map(v=>`<div class="vb-box"><h3>${v.vraag}</h3></div>`).join('');
+  const kaarten = bonusvragen.map(v=>{
+    const cfg = BONUS_INPUT_CONFIG[v.volgorde] || { type: 'getal' };
+    const huidigAntwoord = voorspelling?.bonus_antwoorden?.[v.id] ?? '';
+    let inputHtml;
+    if(cfg.type === 'getal'){
+      inputHtml = `<input type="number" class="bonus-getal-input" data-bonus="${v.id}" min="0" inputmode="numeric" placeholder="Aantal..." value="${huidigAntwoord}">`;
+    } else {
+      const opties = bonusOpties(v);
+      const teamIds = opties.map(t=>t.id).join(',');
+      const huidigNaam = huidigAntwoord ? (opties.find(t=>t.id===huidigAntwoord)?.naam || '') : '';
+      inputHtml = `<div class="combo bonus-combo" data-bonus="${v.id}" data-team-ids="${teamIds}">
+        <input type="text" class="combo-input bonus-combo-input" placeholder="Typ een team..." value="${huidigNaam}" autocomplete="off">
+        <input type="hidden" class="bonus-combo-value" value="${huidigAntwoord}">
+        <div class="combo-list"></div>
+      </div>`;
+    }
+    return `<div class="bonus-kaart">
+      <div class="bonus-vraag">${v.vraag}</div>
+      ${inputHtml}
+    </div>`;
+  }).join('');
+  wrap.innerHTML = `<div class="bonus-grid">${kaarten}</div>`;
+}
+
+// Typeahead voor bonus-teamvragen (gedelegeerde events, werkt na elke re-render)
+function openBonusCombo(inputEl){
+  const wrap = inputEl.closest('.bonus-combo');
+  const toegestaan = (wrap.dataset.teamIds || '').split(',').filter(Boolean);
+  const zoek = inputEl.value.trim().toLowerCase();
+  const opties = teams.filter(t=>toegestaan.includes(t.id) && t.naam.toLowerCase().includes(zoek));
+  const list = wrap.querySelector('.combo-list');
+  list.innerHTML = opties.length
+    ? opties.map(t=>`<div class="combo-opt" data-id="${t.id}">${t.naam}</div>`).join('')
+    : `<div class="combo-opt" style="color:var(--muted)">Geen teams gevonden</div>`;
+  list.classList.add('open');
+}
+document.addEventListener('focus', function(e){
+  if(e.target.classList && e.target.classList.contains('bonus-combo-input')) openBonusCombo(e.target);
+}, true);
+document.addEventListener('input', function(e){
+  if(e.target.classList && e.target.classList.contains('bonus-combo-input')){
+    const wrap = e.target.closest('.bonus-combo');
+    wrap.querySelector('.bonus-combo-value').value = '';
+    openBonusCombo(e.target);
+  }
+});
+document.addEventListener('click', function(e){
+  const opt = e.target.closest('.bonus-combo .combo-opt[data-id]');
+  if(opt){
+    const wrap = opt.closest('.bonus-combo');
+    wrap.querySelector('.bonus-combo-input').value = opt.textContent;
+    wrap.querySelector('.bonus-combo-value').value = opt.dataset.id;
+    wrap.querySelector('.combo-list').classList.remove('open');
+    return;
+  }
+  document.querySelectorAll('.bonus-combo .combo-list.open').forEach(list=>{
+    if(!list.closest('.bonus-combo').contains(e.target)) list.classList.remove('open');
+  });
+});
+
+// Lokale (nog niet opgeslagen) bonusinvoer bewaren bij hertekenen
+function leesOpenBonusInvoer(){
+  const state = {};
+  document.querySelectorAll('.bonus-combo').forEach(wrap=>{
+    state[wrap.dataset.bonus] = { id: wrap.querySelector('.bonus-combo-value').value, naam: wrap.querySelector('.bonus-combo-input').value };
+  });
+  document.querySelectorAll('.bonus-getal-input').forEach(inp=>{
+    state[inp.dataset.bonus] = { getal: inp.value };
+  });
+  return state;
+}
+function herstelOpenBonusInvoer(state){
+  document.querySelectorAll('.bonus-combo').forEach(wrap=>{
+    const saved = state[wrap.dataset.bonus];
+    if(saved && saved.id){
+      wrap.querySelector('.bonus-combo-value').value = saved.id;
+      wrap.querySelector('.bonus-combo-input').value = saved.naam;
+    }
+  });
+  document.querySelectorAll('.bonus-getal-input').forEach(inp=>{
+    const saved = state[inp.dataset.bonus];
+    if(saved && saved.getal !== undefined && saved.getal !== '') inp.value = saved.getal;
+  });
+}
+
+async function slaBonusOp(){
+  const antwoorden = {};
+  document.querySelectorAll('.bonus-combo').forEach(wrap=>{
+    antwoorden[wrap.dataset.bonus] = wrap.querySelector('.bonus-combo-value').value || '';
+  });
+  document.querySelectorAll('.bonus-getal-input').forEach(inp=>{
+    antwoorden[inp.dataset.bonus] = inp.value || '';
+  });
+  try{
+    const res = await fetch(`${SB_URL}/functions/v1/fw2026-opslaan-bonusantwoorden`, {
+      method: 'POST', headers: hdrs(true), body: JSON.stringify({ antwoorden }),
+    });
+    const data = await res.json().catch(()=>null);
+    if(!res.ok || !data || !data.ok){ toonToast(data?.error || 'Kon antwoorden niet opslaan.', true); return; }
+    const bewaardeInvoer = leesOpenBonusInvoer();
+    toonToast('Bonusantwoorden opgeslagen!');
+    await laadEigenData();
+    renderBonus();
+    herstelOpenBonusInvoer(bewaardeInvoer);
+  }catch(e){
+    toonToast('Netwerkfout bij opslaan.', true);
+  }
 }
 
 // ── PUNTENBEREKENING (eigen score) ──
@@ -1238,6 +1373,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
