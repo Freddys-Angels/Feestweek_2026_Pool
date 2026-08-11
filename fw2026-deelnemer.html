@@ -450,6 +450,7 @@ let spellen = [];        // alle spellen
 let uitslagen = [];      // alle officiele uitslagen
 let bonusvragen = [];    // bonusvragen (later)
 let deelnemer = null;    // eigen profiel uit 'deelnemers'
+let alleDeelnemers = []; // alle deelnemers (id, naam, team_id) — voor de tussenstand, zodat nieuwe aanmeldingen direct zichtbaar zijn
 let voorspelling = null; // eigen rij uit 'voorspellingen'
 let gekozenTeamId = null; // tijdens registratie geselecteerd team
 let teamKeuzeGemaakt = false; // true zodra deelnemer expliciet een team (of 'geen team') heeft aangeklikt
@@ -669,16 +670,18 @@ function renderTeamKlassement(){
 
 // ── DATA LADEN ──
 async function laadPubliekeData(){
-  const [teamsRes, spellenRes, uitslagenRes, bonusRes] = await Promise.all([
+  const [teamsRes, spellenRes, uitslagenRes, bonusRes, alleDeelnemersRes] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/teams?select=*&order=categorie,volgorde`, { headers: hdrs(false) }),
     fetch(`${SB_URL}/rest/v1/spellen?select=*&order=volgorde`, { headers: hdrs(false) }),
     fetch(`${SB_URL}/rest/v1/uitslagen?select=*`, { headers: hdrs(false) }),
     fetch(`${SB_URL}/rest/v1/bonusvragen?select=*&order=volgorde`, { headers: hdrs(false) }),
+    fetch(`${SB_URL}/rest/v1/deelnemers?select=id,naam,team_id&order=naam`, { headers: hdrs(false) }),
   ]);
   teams = await teamsRes.json();
   spellen = await spellenRes.json();
   uitslagen = await uitslagenRes.json();
   bonusvragen = await bonusRes.json();
+  alleDeelnemers = await alleDeelnemersRes.json();
 }
 
 async function laadEigenData(){
@@ -1206,20 +1209,34 @@ async function renderTussenstand(){
 
   if(leaderboard && leaderboard.rijen?.length){
     // Volledige, door de admin gepubliceerde ranglijst tonen (heren+dames gecombineerd).
+    // Deelnemers die zich ná de laatste berekening hebben aangemeld staan nog niet in
+    // de gepubliceerde rijen — die vullen we hier aan met 0 punten, zodat iedereen die
+    // zich aanmeldt direct in de tussenstand verschijnt. De score zelf klopt pas weer
+    // zodra de admin opnieuw op "Bereken & Publiceer Stand" klikt.
     note.style.display = 'none';
-    const eigenRij = leaderboard.rijen.find(r=>r.deelnemer_id === sessie.user.id);
+    const spelIds = leaderboard.spellen.map(s=>s.id);
+    const bekendeIds = new Set(leaderboard.rijen.map(r=>r.deelnemer_id));
+    const aangevuld = [...leaderboard.rijen];
+    alleDeelnemers.forEach(d=>{
+      if(bekendeIds.has(d.id)) return;
+      const perSpel = {}; spelIds.forEach(id=>perSpel[id]=0);
+      aangevuld.push({ deelnemer_id: d.id, naam: d.naam, team_id: d.team_id, per_spel: perSpel, bonus_punten: 0, totaal: 0 });
+    });
+    aangevuld.sort((a,b)=>(b.totaal||0) - (a.totaal||0));
+    laatsteLeaderboard = { ...leaderboard, rijen: aangevuld };
+
+    const eigenRij = aangevuld.find(r=>r.deelnemer_id === sessie.user.id);
 
     document.getElementById('ov-naam').textContent = eigenRij?.naam || deelnemer?.naam || sessie?.user?.email || '—';
     document.getElementById('ov-team').textContent = deelnemer?.team_id ? teamNaam(deelnemer.team_id) : 'Geen team gekoppeld';
     document.getElementById('ov-totaal').textContent = eigenRij?.totaal ?? 0;
 
-    const spelIds = leaderboard.spellen.map(s=>s.id);
     document.getElementById('ov-thead').innerHTML = `<tr>
       <th>#</th><th>Naam</th>
       ${leaderboard.spellen.map(s=>`<th>${s.is_eindstand ? '🏆 ' + s.naam : s.naam}</th>`).join('')}
       <th>Bonus</th><th>Totaal</th>
     </tr>`;
-    tbody.innerHTML = leaderboard.rijen.map((r,i)=>`
+    tbody.innerHTML = aangevuld.map((r,i)=>`
       <tr class="${r.deelnemer_id===sessie.user.id ? 'kl-jij' : ''}">
         <td class="kl-rank">${i+1}</td>
         <td>${r.naam}</td>
@@ -1231,7 +1248,8 @@ async function renderTussenstand(){
     return;
   }
 
-  // Nog geen gepubliceerde stand: toon alleen de eigen (client-side berekende) score.
+  // Nog geen gepubliceerde stand: toon wel al iedereen die zich heeft aangemeld
+  // (met 0 punten), plus de eigen (client-side berekende) score op de eigen rij.
   note.style.display = 'block';
   const { perSpel, bonusPunten } = berekenEigenPunten();
 
@@ -1242,19 +1260,29 @@ async function renderTussenstand(){
   </tr>`;
 
   const spelPunten = spellen.map(s=>perSpel[s.id]||0);
-  const totaal = spelPunten.reduce((a,b)=>a+b,0) + bonusPunten;
+  const eigenTotaal = spelPunten.reduce((a,b)=>a+b,0) + bonusPunten;
 
   document.getElementById('ov-naam').textContent = deelnemer?.naam || sessie?.user?.email || '—';
   document.getElementById('ov-team').textContent = deelnemer?.team_id ? teamNaam(deelnemer.team_id) : 'Geen team gekoppeld';
-  document.getElementById('ov-totaal').textContent = totaal;
+  document.getElementById('ov-totaal').textContent = eigenTotaal;
 
-  tbody.innerHTML = `<tr class="kl-jij">
-    <td class="kl-rank">—</td>
-    <td>${deelnemer?.naam || 'Jij'}</td>
-    ${spelPunten.map(p=>`<td>${p}</td>`).join('')}
-    <td>${bonusPunten}</td>
-    <td class="totaal">${totaal}</td>
-  </tr>`;
+  const lijst = (alleDeelnemers.length ? alleDeelnemers : [{ id: sessie.user.id, naam: deelnemer?.naam || 'Jij', team_id: deelnemer?.team_id }])
+    .map(d=>{
+      if(d.id === sessie.user.id){
+        return { id: d.id, naam: deelnemer?.naam || d.naam, spelPunten, bonusPunten, totaal: eigenTotaal };
+      }
+      return { id: d.id, naam: d.naam, spelPunten: spellen.map(()=>0), bonusPunten: 0, totaal: 0 };
+    })
+    .sort((a,b)=>b.totaal - a.totaal);
+
+  tbody.innerHTML = lijst.map((r,i)=>`
+    <tr class="${r.id===sessie.user.id ? 'kl-jij' : ''}">
+      <td class="kl-rank">${r.totaal>0 ? i+1 : '—'}</td>
+      <td>${r.naam}</td>
+      ${r.spelPunten.map(p=>`<td>${p}</td>`).join('')}
+      <td>${r.bonusPunten}</td>
+      <td class="totaal">${r.totaal}</td>
+    </tr>`).join('');
   if(klassementView==='team') renderTeamKlassement();
 }
 
@@ -1371,6 +1399,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
