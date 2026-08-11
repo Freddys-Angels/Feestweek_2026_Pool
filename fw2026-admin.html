@@ -248,18 +248,20 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
       <div class="sec-title">Bonusvragen</div>
       <div class="sec-sub">Vragen rond het weekthema + correcte antwoorden (voor puntentelling).</div>
       <div class="card">
-        <h3>Nieuwe vraag</h3>
+        <h3 id="bonus-form-titel">Nieuwe vraag</h3>
+        <input type="hidden" id="bonus-id" value="">
         <div class="form-row">
           <input type="text" id="bonus-vraag" placeholder="Vraag">
-          <input type="number" id="bonus-punten" placeholder="Punten" value="15" style="max-width:100px">
+          <input type="number" id="bonus-punten" placeholder="Punten" value="10" style="max-width:100px">
           <input type="text" id="bonus-antwoord" placeholder="Correct antwoord (evt. later)">
-          <button class="btn btn-gold btn-sm" onclick="voegBonusToe()">+ Toevoegen</button>
+          <button class="btn btn-gold btn-sm" onclick="voegBonusToe()" id="bonus-submit-btn">+ Toevoegen</button>
+          <button class="btn btn-outline btn-sm" onclick="annuleerBonusBewerken()" id="bonus-annuleer-btn" style="display:none">Annuleren</button>
         </div>
       </div>
       <div class="card">
         <table class="beheer">
-          <thead><tr><th>Vraag</th><th>Punten</th><th>Correct antwoord</th><th></th></tr></thead>
-          <tbody id="bonus-tbody"><tr><td colspan="4" class="loading">Laden...</td></tr></tbody>
+          <thead><tr><th>Vraag</th><th>Punten</th><th>Correct antwoord</th><th></th><th></th></tr></thead>
+          <tbody id="bonus-tbody"><tr><td colspan="5" class="loading">Laden...</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -570,25 +572,50 @@ async function slaUitslagOp(spelId){
 // ── BONUSVRAGEN ──
 function renderBonus(){
   const tbody = document.getElementById('bonus-tbody');
-  if(!bonusvragen.length){ tbody.innerHTML = '<tr><td colspan="4" class="loading">Nog geen bonusvragen.</td></tr>'; return; }
+  if(!bonusvragen.length){ tbody.innerHTML = '<tr><td colspan="5" class="loading">Nog geen bonusvragen.</td></tr>'; return; }
   tbody.innerHTML = bonusvragen.map(v=>`
     <tr>
       <td>${v.vraag}</td>
       <td>${v.punten}</td>
       <td>${v.correct_antwoord || '<span class="muted-small">nog niet ingevuld</span>'}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="bewerkBonus('${v.id}')">Bewerk</button></td>
       <td><button class="btn btn-danger btn-sm" onclick="verwijderBonus('${v.id}')">Verwijder</button></td>
     </tr>`).join('');
 }
+function bewerkBonus(id){
+  const v = bonusvragen.find(x=>x.id===id);
+  if(!v) return;
+  document.getElementById('bonus-id').value = v.id;
+  document.getElementById('bonus-vraag').value = v.vraag || '';
+  document.getElementById('bonus-punten').value = v.punten ?? 10;
+  document.getElementById('bonus-antwoord').value = v.correct_antwoord || '';
+  document.getElementById('bonus-form-titel').textContent = 'Vraag bewerken';
+  document.getElementById('bonus-submit-btn').textContent = '💾 Wijzigen opslaan';
+  document.getElementById('bonus-annuleer-btn').style.display = '';
+  document.querySelector('#sectie-bonus .card').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function annuleerBonusBewerken(){
+  document.getElementById('bonus-id').value = '';
+  document.getElementById('bonus-vraag').value = '';
+  document.getElementById('bonus-punten').value = 10;
+  document.getElementById('bonus-antwoord').value = '';
+  document.getElementById('bonus-form-titel').textContent = 'Nieuwe vraag';
+  document.getElementById('bonus-submit-btn').textContent = '+ Toevoegen';
+  document.getElementById('bonus-annuleer-btn').style.display = 'none';
+}
 async function voegBonusToe(){
+  const id = document.getElementById('bonus-id').value || undefined;
   const vraag = document.getElementById('bonus-vraag').value.trim();
-  const punten = parseInt(document.getElementById('bonus-punten').value) || 15;
+  const punten = parseInt(document.getElementById('bonus-punten').value) || 10;
   const correct_antwoord = document.getElementById('bonus-antwoord').value.trim() || null;
   if(!vraag){ toonToast('Vul een vraag in.', true); return; }
-  const res = await adminActie('upsert_bonusvraag', { vraag, punten, correct_antwoord });
+  const res = await adminActie('upsert_bonusvraag', { id, vraag, punten, correct_antwoord });
   if(res.ok){
-    document.getElementById('bonus-vraag').value=''; document.getElementById('bonus-antwoord').value='';
-    toonToast('Bonusvraag toegevoegd.');
+    toonToast(id ? 'Bonusvraag bijgewerkt.' : 'Bonusvraag toegevoegd.');
+    annuleerBonusBewerken();
     await laadAlles(); renderBonus();
+  } else {
+    toonToast(res.error, true);
   }
 }
 async function verwijderBonus(id){
@@ -818,6 +845,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
