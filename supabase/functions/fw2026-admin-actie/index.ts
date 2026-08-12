@@ -105,6 +105,23 @@ Deno.serve(async (req: Request) => {
         return jsonRespons({ ok: true });
       }
 
+      case "verwijder_uitslag": {
+        const { spel_id, categorie } = data as any;
+        if (!spel_id || !categorie) {
+          return jsonRespons({ ok: false, error: "spel_id en categorie zijn verplicht." }, 400);
+        }
+        if (categorie !== "heren" && categorie !== "dames") {
+          return jsonRespons({ ok: false, error: "categorie moet 'heren' of 'dames' zijn." }, 400);
+        }
+        const { error } = await supabase
+          .from("uitslagen")
+          .delete()
+          .eq("spel_id", spel_id)
+          .eq("categorie", categorie);
+        if (error) return jsonRespons({ ok: false, error: error.message }, 500);
+        return jsonRespons({ ok: true });
+      }
+
       case "upsert_bonusvraag": {
         const { id, vraag, punten, correct_antwoord, volgorde } = data as any;
         if (!vraag) return jsonRespons({ ok: false, error: "vraag is verplicht." }, 400);
@@ -168,5 +185,6 @@ Deno.serve(async (req: Request) => {
     return jsonRespons({ ok: false, error: String(e) }, 500);
   }
 });
+
 
 
