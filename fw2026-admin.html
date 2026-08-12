@@ -315,6 +315,33 @@ let teams = [], spellen = [], uitslagen = [], bonusvragen = [], deelnemers = [],
 function hdrs(metAuth){
   return { 'apikey': SB_KEY, 'Content-Type': 'application/json', 'Authorization': metAuth && sessie ? `Bearer ${sessie.access_token}` : `Bearer ${SB_KEY}` };
 }
+
+// De sessie-token verloopt na ~1 uur. Zonder verversing gaf elke actie na die tijd
+// een stille 401 (o.a. bij "Deelnemer verwijderen"). Dit ververst 'm op tijd via
+// het refresh_token, zodat je nooit meer opnieuw hoeft in te loggen tijdens gebruik.
+let sessieVerversenBezig = null;
+async function verversSessieIndienNodig(){
+  if(!sessie || !sessie.refresh_token) return;
+  const bijnaVerlopen = !sessie.expires_at || (sessie.expires_at * 1000 - Date.now()) < 120000; // < 2 min geldig
+  if(!bijnaVerlopen) return;
+  if(sessieVerversenBezig) return sessieVerversenBezig;
+  sessieVerversenBezig = (async () => {
+    try{
+      const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: sessie.refresh_token }),
+      });
+      const data = await res.json().catch(()=>null);
+      if(res.ok && data?.access_token){
+        sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user, expires_at: data.expires_at };
+        localStorage.setItem('fw2026_admin_sessie', JSON.stringify(sessie));
+      }
+    }catch(e){ /* stil falen; de actie erna geeft dan alsnog een duidelijke foutmelding */ }
+    finally{ sessieVerversenBezig = null; }
+  })();
+  return sessieVerversenBezig;
+}
 function toonToast(msg, isErr){
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'toast show' + (isErr?' err':'');
@@ -333,7 +360,7 @@ async function doeLogin(){
     const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, { method:'POST', headers: hdrs(false), body: JSON.stringify({ email, password: ww }) });
     const data = await res.json();
     if(!res.ok){ err.textContent = data.error_description || 'Inloggen mislukt.'; return; }
-    sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
+    sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user, expires_at: data.expires_at };
 
     const profRes = await fetch(`${SB_URL}/rest/v1/deelnemers?select=is_admin&id=eq.${sessie.user.id}`, { headers: hdrs(true) });
     const profArr = await profRes.json();
@@ -360,6 +387,7 @@ function wisselTab(el){
 }
 
 async function laadAlles(){
+  await verversSessieIndienNodig();
   const [t,s,u,b,d,v] = await Promise.all([
     fetch(`${SB_URL}/rest/v1/teams?select=*&order=categorie,volgorde`, { headers: hdrs(true) }),
     fetch(`${SB_URL}/rest/v1/spellen?select=*&order=volgorde`, { headers: hdrs(true) }),
@@ -372,6 +400,7 @@ async function laadAlles(){
 }
 
 async function adminActie(actie, data){
+  await verversSessieIndienNodig();
   const res = await fetch(`${SB_URL}/functions/v1/fw2026-admin-actie`, { method:'POST', headers: hdrs(true), body: JSON.stringify({ actie, data }) });
   const json = await res.json();
   if(!json.ok) toonToast(json.error, true);
@@ -557,6 +586,7 @@ function renderUitslagen(){
   }).join('');
 }
 async function slaUitslagOp(spelId){
+  await verversSessieIndienNodig();
   for(const categorie of ['heren','dames']){
     const selects = document.querySelectorAll(`select[data-spel="${spelId}"][data-cat="${categorie}"]`);
     const top3 = Array.from(selects).map(s=>s.value);
@@ -764,12 +794,13 @@ function kopieerReminder(id, naam, btn){
 
 async function verwijderDeelnemer(id, naam){
   if(!confirm(`"${naam}" volledig verwijderen? Dit verwijdert het account én alle voorspellingen, en kan niet ongedaan worden gemaakt.`)) return;
+  await verversSessieIndienNodig();
   try{
     const res = await fetch(`${SB_URL}/functions/v1/fw2026-verwijder-deelnemer`, {
       method:'POST', headers: hdrs(true), body: JSON.stringify({ deelnemer_id: id })
     });
-    const data = await res.json();
-    if(!data.ok){ toonToast(data.error, true); return; }
+    const data = await res.json().catch(()=>null);
+    if(!res.ok || !data || !data.ok){ toonToast(data?.error || `Verwijderen mislukt (${res.status}).`, true); return; }
     toonToast(`${naam} verwijderd.`);
     await laadAlles();
     renderDeelnemers();
@@ -781,6 +812,7 @@ async function berekenStand(){
   const btn = document.getElementById('bereken-btn');
   btn.disabled = true; btn.textContent = 'Bezig met berekenen...';
   try{
+    await verversSessieIndienNodig();
     const res = await fetch(`${SB_URL}/functions/v1/fw2026-bereken-stand`, { method:'POST', headers: hdrs(true) });
     const data = await res.json().catch(()=>null);
     if(!res.ok || !data || !data.ok){
@@ -851,7 +883,7 @@ async function startApp(){
 (async function init(){
   const opgeslagen = localStorage.getItem('fw2026_admin_sessie');
   if(opgeslagen){
-    try{ sessie = JSON.parse(opgeslagen); await startApp(); return; }
+    try{ sessie = JSON.parse(opgeslagen); await verversSessieIndienNodig(); await startApp(); return; }
     catch(e){ localStorage.removeItem('fw2026_admin_sessie'); }
   }
   document.getElementById('gate-wrap').style.display='flex';
@@ -859,6 +891,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
