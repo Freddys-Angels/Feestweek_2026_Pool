@@ -112,6 +112,8 @@ table.beheer tr:hover td{background:var(--bg3);}
 .uitslag-catblok{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--bg2);}
 .uitslag-catblok:last-of-type{border-bottom:none;margin-bottom:10px;padding-bottom:0;}
 .uitslag-cattitel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:8px;}
+.uitslag-cattitel-rij{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.uitslag-cattitel-rij .uitslag-cattitel{margin-bottom:8px;}
 .uitslag-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .uitslag-pos{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px;}
 .uitslag-select{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:8px;border-radius:6px;font-size:13px;}
@@ -570,12 +572,16 @@ function renderUitslagen(){
   wrap.innerHTML = spellen.map(spel=>{
     const catBlok = (categorie) => {
       const opties = teams.filter(t=>t.categorie===categorie);
+      const heeftUitslag = uitslagen.some(u=>u.spel_id===spel.id && u.categorie===categorie);
       const selectHtml = (pos) => `<select class="uitslag-select" data-spel="${spel.id}" data-cat="${categorie}" data-pos="${pos}">
         <option value="">—</option>
         ${opties.map(t=>`<option value="${t.id}" ${t.id===huidigeUitslag(spel.id,categorie,pos)?'selected':''}>${t.naam}</option>`).join('')}
       </select>`;
       return `<div class="uitslag-catblok">
-        <div class="uitslag-cattitel">${categorie==='heren'?'Heren':'Dames'}</div>
+        <div class="uitslag-cattitel-rij">
+          <div class="uitslag-cattitel">${categorie==='heren'?'Heren':'Dames'}</div>
+          ${heeftUitslag ? `<button class="btn btn-danger btn-sm" onclick="verwijderUitslag('${spel.id}','${categorie}')">Wissen</button>` : ''}
+        </div>
         <div class="uitslag-grid">
           <div><div class="uitslag-pos">#1</div>${selectHtml(1)}</div>
           <div><div class="uitslag-pos">#2</div>${selectHtml(2)}</div>
@@ -590,6 +596,12 @@ function renderUitslagen(){
       <button class="btn btn-gold btn-sm" onclick="slaUitslagOp('${spel.id}')">Opslaan</button>
     </div>`;
   }).join('');
+}
+async function verwijderUitslag(spelId, categorie){
+  if(!confirm(`Uitslag voor ${categorie} wissen? Dit kan gevolgen hebben voor de puntentelling.`)) return;
+  const res = await adminActie('verwijder_uitslag', { spel_id: spelId, categorie });
+  if(res.ok){ toonToast('Uitslag gewist.'); await laadAlles(); renderUitslagen(); }
+  else{ toonToast(res.error, true); }
 }
 async function slaUitslagOp(spelId){
   await verversSessieIndienNodig();
@@ -948,6 +960,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
