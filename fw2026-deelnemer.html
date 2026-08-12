@@ -156,7 +156,9 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 /* BONUSVRAGEN */
 .bonus-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
 .bonus-kaart{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;flex-direction:column;gap:10px;}
-.bonus-vraag{font-size:13px;font-weight:700;color:var(--text);line-height:1.4;min-height:36px;}
+.bonus-vraag-rij{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.bonus-vraag{font-size:13px;font-weight:700;color:var(--text);line-height:1.4;}
+.bonus-punten-badge{flex-shrink:0;font-size:11px;font-weight:800;color:var(--gold);background:var(--gold3);border:1px solid rgba(201,168,76,.4);border-radius:12px;padding:3px 9px;white-space:nowrap;}
 .bonus-getal-input{width:100%;border:1px solid var(--border2);background:var(--bg3);color:var(--text);padding:9px 10px;border-radius:6px;font-size:14px;}
 .bonus-pil{font-size:11.5px;font-weight:700;padding:6px 10px;border-radius:20px;text-align:center;line-height:1.5;}
 .bonus-pil.ok{color:var(--green);background:rgba(43,122,66,.12);}
@@ -1122,7 +1124,10 @@ function renderBonus(){
       — <strong>${score.punten}pt</strong>
     </div>` : '';
     return `<div class="bonus-kaart">
-      <div class="bonus-vraag">${v.vraag}</div>
+      <div class="bonus-vraag-rij">
+        <div class="bonus-vraag">${v.vraag}</div>
+        <span class="bonus-punten-badge">${v.punten}pt</span>
+      </div>
       ${inputHtml}
       ${pilHtml}
     </div>`;
@@ -1468,6 +1473,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
