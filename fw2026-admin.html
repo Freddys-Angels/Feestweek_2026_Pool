@@ -701,7 +701,7 @@ async function slaBonusAntwoordenOp(){
     }
     const huidig = v.correct_antwoord || '';
     if(nieuwAntwoord === huidig) continue; // niet gewijzigd, overslaan
-    const res = await adminActie('upsert_bonusvraag', { id: v.id, vraag: v.vraag, punten: v.punten, correct_antwoord: nieuwAntwoord || null });
+    const res = await adminActie('upsert_bonusvraag', { id: v.id, vraag: v.vraag, punten: v.punten, volgorde: v.volgorde, correct_antwoord: nieuwAntwoord || null });
     if(!res.ok){ fout = `${v.vraag}: ${res.error}`; continue; }
     gewijzigd++;
   }
@@ -948,6 +948,7 @@ async function startApp(){
 </script>
 </body>
 </html>
+
 
 
 
