@@ -108,13 +108,20 @@ Deno.serve(async (req: Request) => {
       case "upsert_bonusvraag": {
         const { id, vraag, punten, correct_antwoord, volgorde } = data as any;
         if (!vraag) return jsonRespons({ ok: false, error: "vraag is verplicht." }, 400);
-        const rij = {
+        const rij: Record<string, unknown> = {
           vraag,
           punten: punten ?? 15,
           correct_antwoord: correct_antwoord ?? null,
-          volgorde: volgorde ?? 0,
           ...(id ? { id } : {}),
         };
+        // Alleen volgorde meesturen als 'ie expliciet is opgegeven, zodat een
+        // vergeten/lege waarde de bestaande volgorde van een bestaande vraag
+        // niet per ongeluk terugzet naar 0.
+        if (volgorde !== undefined && volgorde !== null) {
+          rij.volgorde = volgorde;
+        } else if (!id) {
+          rij.volgorde = 0; // nieuwe vraag zonder opgegeven volgorde
+        }
         const { data: res, error } = await supabase.from("bonusvragen").upsert(rij).select().single();
         if (error) return jsonRespons({ ok: false, error: error.message }, 500);
         return jsonRespons({ ok: true, bonusvraag: res });
@@ -161,4 +168,5 @@ Deno.serve(async (req: Request) => {
     return jsonRespons({ ok: false, error: String(e) }, 500);
   }
 });
+
 
