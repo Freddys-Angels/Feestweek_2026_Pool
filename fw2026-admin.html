@@ -144,6 +144,28 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 .copy-btn:hover{border-color:var(--green);color:var(--green);}
 .del-btn{border:none;background:transparent;color:var(--red2);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;}
 .del-btn:hover{color:var(--red);}
+
+/* POSITIEVERLOOP */
+.pv-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.pv-card:fullscreen{border-radius:0;padding:20px;display:flex;flex-direction:column;}
+.pv-card:fullscreen .pv-chart-wrap{flex:1;}
+.pv-titel{font-family:'Playfair Display',serif;font-weight:900;color:var(--green);font-size:16px;margin-bottom:12px;}
+.pv-controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.pv-select{border:1px solid var(--border2);background:var(--bg3);padding:8px 10px;border-radius:6px;font-size:13px;color:var(--text);}
+.pv-search-wrap{position:relative;flex:1;min-width:180px;}
+.pv-search{width:100%;border:1px solid var(--border2);background:var(--bg3);padding:8px 12px;border-radius:6px;font-size:13px;}
+.pv-search:focus{outline:none;border-color:var(--green);}
+.pv-ac-lijst{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:20;}
+.pv-ac-item{padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--bg2);}
+.pv-ac-item:last-child{border-bottom:none;}
+.pv-ac-item:hover{background:var(--green3);}
+.pv-icon-btn{border:1px solid var(--border2);background:var(--white);color:var(--text2);padding:8px 12px;border-radius:6px;font-size:13px;cursor:pointer;white-space:nowrap;}
+.pv-icon-btn:hover{border-color:var(--green);color:var(--green);}
+.pv-highlight-chip{display:none;align-items:center;gap:6px;background:var(--green3);color:var(--green);border:1px solid var(--green2);border-radius:16px;padding:5px 8px 5px 12px;font-size:12px;font-weight:700;}
+.pv-highlight-chip button{border:none;background:none;color:var(--green);cursor:pointer;font-size:14px;line-height:1;padding:2px;}
+.pv-chart-wrap{position:relative;height:360px;}
+.pv-chart-wrap canvas{width:100%!important;height:100%!important;}
+.pv-leeg{text-align:center;padding:30px 10px;color:var(--muted);font-size:13px;}
 </style>
 </head>
 <body>
@@ -169,6 +191,7 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 
   <nav class="tabs">
     <div class="tab active" data-tab="stand" onclick="wisselTab(this)">📈 Tussenstand</div>
+    <div class="tab" data-tab="verloop" onclick="wisselTab(this)">📊 Verloop</div>
     <div class="tab" data-tab="teams" onclick="wisselTab(this)">👕 Teams</div>
     <div class="tab" data-tab="spellen" onclick="wisselTab(this)">🎲 Spellen</div>
     <div class="tab" data-tab="uitslagen" onclick="wisselTab(this)">🏆 Uitslagen</div>
@@ -192,6 +215,39 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
         <thead id="stand-thead"><tr><th>#</th><th>Naam</th><th>Bonus</th><th>Totaal</th></tr></thead>
         <tbody id="stand-tbody"><tr><td colspan="4" class="loading">Nog niet berekend.</td></tr></tbody>
       </table>
+    </section>
+
+    <!-- POSITIEVERLOOP -->
+    <section class="section" id="sectie-verloop">
+      <div class="sec-title">Positieverloop</div>
+      <div class="sec-sub">Hoe de plaats van deelnemers of teams verschuift na elk afgerond spel. Er verschijnt pas een lijn zodra de tussenstand voor minstens één spel is berekend.</div>
+
+      <div class="kl-toggle-row" style="margin-bottom:16px">
+        <button class="kl-toggle-btn active" id="pv-btn-deelnemers" onclick="pvWisselSoort('deelnemers')">👤 Individueel</button>
+        <button class="kl-toggle-btn" id="pv-btn-teams" onclick="pvWisselSoort('teams')">👕 Team</button>
+      </div>
+
+      <div class="pv-card" id="pv-card">
+        <div class="pv-titel" id="pv-titel">Positieverloop — individueel</div>
+        <div class="pv-controls">
+          <select class="pv-select" id="pv-topn" onchange="pvOpTopNGewijzigd()">
+            <option value="10">Top 10</option>
+            <option value="20">Top 20</option>
+            <option value="alle">Alle</option>
+          </select>
+          <div class="pv-search-wrap">
+            <input type="search" class="pv-search" id="pv-zoek" placeholder="🔍 Zoek naam om uit te lichten...">
+            <div class="pv-ac-lijst" id="pv-ac-lijst"></div>
+          </div>
+          <div class="pv-highlight-chip" id="pv-highlight-chip"><span id="pv-highlight-naam"></span><button onclick="pvWisHighlight()">✕</button></div>
+          <button class="pv-icon-btn" onclick="pvVolledigScherm()" title="Volledig scherm">⛶ Scherm</button>
+          <button class="pv-icon-btn" onclick="pvKopieerAfbeelding()" title="Afbeelding kopiëren/delen">🖼️ Delen</button>
+        </div>
+        <div class="pv-chart-wrap">
+          <canvas id="pv-canvas"></canvas>
+          <div class="pv-leeg" id="pv-leeg" style="display:none">Nog geen positieverloop beschikbaar — bereken de tussenstand zodra de eerste spel-uitslag binnen is.</div>
+        </div>
+      </div>
     </section>
 
     <!-- TEAMS -->
@@ -392,6 +448,7 @@ function wisselTab(el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('sectie-'+el.dataset.tab).classList.add('active');
+  if(el.dataset.tab === 'verloop') pvRender();
 }
 
 async function laadAlles(){
@@ -891,6 +948,7 @@ async function berekenStand(){
       return;
     }
     renderStand(data.leaderboard);
+    await laadGecachetStand(); // haalt ook de bijgewerkte positieverloop-snapshot op
     toonToast('Stand berekend en gepubliceerd!');
   }catch(e){ console.error('berekenStand netwerkfout:', e); toonToast('Netwerkfout: ' + e.message, true); }
   finally{ btn.disabled=false; btn.textContent='★ Bereken & Publiceer Stand'; }
@@ -939,6 +997,8 @@ async function laadGecachetStand(){
   const arr = await res.json();
   const leaderboard = arr[0]?.data?.leaderboard || null;
   renderStand(leaderboard);
+  pvData = arr[0]?.data?.positieverloop || null;
+  pvRender();
 }
 
 async function startApp(){
@@ -947,6 +1007,314 @@ async function startApp(){
   await laadAlles();
   renderTeams(); renderSpellen(); renderUitslagen(); renderBonus(); renderDeelnemers();
   await laadGecachetStand();
+}
+
+// ══════════════════ POSITIEVERLOOP ══════════════════
+let pvData = null;             // { periodes, deelnemers, teams } uit admin_data
+let pvSoort = 'deelnemers';    // 'deelnemers' | 'teams'
+let pvTopN = 10;               // 10 | 20 | 'alle'
+let pvHighlight = null;        // { id, naam }
+
+function pvNaamVoor(id){
+  if(pvSoort === 'teams') return teamNaam(id);
+  const d = deelnemers.find(x=>String(x.id)===String(id));
+  return d ? d.naam : 'Onbekend';
+}
+function pvBerekenPositieverloop(pv, soort){
+  if(!pv || !pv.periodes || !pv.periodes.length) return null;
+  const periodes = [...pv.periodes].sort((a,b)=>a.volgorde-b.volgorde);
+  const snapshots = pv[soort] || {};
+  const posPerPeriode = {};
+  let totaalEntiteiten = 0;
+  periodes.forEach(p=>{
+    const snap = snapshots[p.spel_id] || [];
+    const gesorteerd = [...snap].sort((a,b)=>b.totaal - a.totaal);
+    const m = {};
+    gesorteerd.forEach((s,i)=>{ m[s.id] = i+1; });
+    posPerPeriode[p.spel_id] = m;
+    if(snap.length > totaalEntiteiten) totaalEntiteiten = snap.length;
+  });
+  return { periodes, posPerPeriode, totaalEntiteiten, snapshots };
+}
+
+function pvKleur(i){
+  const tinten = [356,152,42,205,280,18,168,320,95,235,5,130,60,260];
+  const h = tinten[i % tinten.length];
+  const l = 36 + (Math.floor(i / tinten.length) * 12) % 26;
+  return `hsl(${h}, 60%, ${l}%)`;
+}
+
+let pvChartJsWordtGeladen = false;
+function pvLaadChartJs(cb){
+  if(window.Chart){ cb(); return; }
+  if(pvChartJsWordtGeladen){ setTimeout(()=>pvLaadChartJs(cb), 150); return; }
+  pvChartJsWordtGeladen = true;
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+  s.onload = cb;
+  document.head.appendChild(s);
+}
+
+const pvEindLabelPlugin = {
+  id: 'pvEindLabel',
+  afterDatasetsDraw(chart){
+    const { ctx, chartArea } = chart;
+    if(!chartArea) return;
+    const items = [];
+    chart.data.datasets.forEach((ds, di) => {
+      if(!ds.pvLabel) return;
+      const meta = chart.getDatasetMeta(di);
+      if(!meta || meta.hidden) return;
+      let idx = -1;
+      for(let i = ds.data.length - 1; i >= 0; i--){
+        if(ds.data[i] !== null && ds.data[i] !== undefined){ idx = i; break; }
+      }
+      if(idx === -1) return;
+      const pt = meta.data[idx];
+      if(!pt) return;
+      items.push({ origY: pt.y, y: pt.y, label: ds.label, color: ds.borderColor || '#1A5C1E' });
+    });
+    if(!items.length) return;
+    items.sort((a,b)=>a.y-b.y);
+    const MINAFSTAND = 14;
+    for(let i=1;i<items.length;i++){
+      if(items[i].y - items[i-1].y < MINAFSTAND) items[i].y = items[i-1].y + MINAFSTAND;
+    }
+    const overschrijding = items[items.length-1].y - chartArea.bottom;
+    if(overschrijding > 0){ items.forEach(it=>it.y -= overschrijding); }
+
+    ctx.save();
+    ctx.font = "bold 11px Lato, sans-serif";
+    ctx.textBaseline = 'middle';
+    items.forEach(it=>{
+      ctx.strokeStyle = it.color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(chartArea.right, it.origY);
+      ctx.lineTo(chartArea.right + 4, it.y);
+      ctx.stroke();
+      ctx.fillStyle = it.color;
+      ctx.fillText(it.label, chartArea.right + 7, it.y);
+    });
+    ctx.restore();
+  }
+};
+
+function pvTekenGrafiek(){
+  const berekend = pvBerekenPositieverloop(pvData, pvSoort);
+  const canvas = document.getElementById('pv-canvas');
+  const leeg = document.getElementById('pv-leeg');
+  if(!berekend){
+    if(canvas._pvChart){ canvas._pvChart.destroy(); canvas._pvChart = null; }
+    canvas.style.display = 'none';
+    leeg.style.display = 'block';
+    return;
+  }
+  canvas.style.display = 'block';
+  leeg.style.display = 'none';
+
+  const { periodes, posPerPeriode, totaalEntiteiten, snapshots } = berekend;
+  const laatstePeriode = periodes[periodes.length-1];
+  const laatsteSnap = snapshots[laatstePeriode.spel_id] || [];
+  const laatstePos = posPerPeriode[laatstePeriode.spel_id] || {};
+
+  let ids, achtergrondModus = false;
+  const highlightId = pvHighlight ? String(pvHighlight.id) : null;
+
+  if(highlightId){
+    ids = laatsteSnap.map(s=>String(s.id));
+    achtergrondModus = true;
+  } else if(pvTopN === 'alle'){
+    ids = laatsteSnap.map(s=>String(s.id));
+    achtergrondModus = ids.length > 25;
+  } else {
+    const gesorteerd = [...laatsteSnap].sort((a,b)=>(laatstePos[a.id]||9999) - (laatstePos[b.id]||9999));
+    ids = gesorteerd.slice(0, pvTopN).map(s=>String(s.id));
+  }
+
+  const labels = periodes.map(p => p.is_eindstand ? '🏆 ' + p.naam : p.naam);
+  let kleurTeller = 0;
+  let datasets = ids.map((id) => {
+    const data = periodes.map(p => {
+      const pos = posPerPeriode[p.spel_id]?.[id];
+      return pos === undefined ? null : pos;
+    });
+    const isHighlight = id === highlightId;
+    const kleur = achtergrondModus && !isHighlight ? 'rgba(122,122,106,0.28)' : pvKleur(kleurTeller++);
+    return {
+      label: pvNaamVoor(id),
+      data,
+      borderColor: kleur,
+      backgroundColor: kleur,
+      borderWidth: isHighlight ? 3.5 : (achtergrondModus ? 1 : 2.2),
+      pointRadius: achtergrondModus && !isHighlight ? 0 : 3,
+      pointHoverRadius: 5,
+      tension: 0,
+      spanGaps: false,
+      pvLabel: isHighlight || !achtergrondModus,
+      _isHighlight: isHighlight,
+    };
+  });
+  // Uitgelichte lijn als laatste tekenen zodat die boven de rest ligt.
+  datasets.sort((a,b)=>(a._isHighlight?1:0) - (b._isHighlight?1:0));
+
+  const tickStap = totaalEntiteiten <= 30 ? 1 : (totaalEntiteiten <= 60 ? 5 : 10);
+
+  if(canvas._pvChart) canvas._pvChart.destroy();
+  canvas._pvChart = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: { labels, datasets },
+    plugins: [pvEindLabelPlugin],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { right: 96 } },
+      animation: { duration: 250 },
+      interaction: { mode: 'nearest', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: plaats ${ctx.parsed.y}` } },
+      },
+      scales: {
+        y: {
+          reverse: true, min: 1, max: Math.max(totaalEntiteiten, 1),
+          ticks: { stepSize: tickStap, color: '#4A4A4A' },
+          title: { display: true, text: 'Plaats', color: '#1A5C1E', font: { weight: 'bold' } },
+          grid: { color: '#EDE8DB' },
+        },
+        x: {
+          ticks: { color: '#4A4A4A', font: { size: 11 } },
+          title: { display: true, text: 'Spellen', color: '#1A5C1E', font: { weight: 'bold' } },
+          grid: { display: false },
+        },
+      },
+    },
+  });
+}
+
+function pvRender(){
+  document.getElementById('pv-titel').textContent = 'Positieverloop — ' + (pvSoort === 'teams' ? 'team' : 'individueel');
+  pvLaadChartJs(pvTekenGrafiek);
+}
+
+function pvWisselSoort(soort){
+  pvSoort = soort;
+  pvHighlight = null;
+  pvWisHighlightUI();
+  document.getElementById('pv-btn-deelnemers').classList.toggle('active', soort==='deelnemers');
+  document.getElementById('pv-btn-teams').classList.toggle('active', soort==='teams');
+  document.getElementById('pv-zoek').placeholder = soort==='teams' ? '🔍 Zoek team om uit te lichten...' : '🔍 Zoek naam om uit te lichten...';
+  pvRender();
+}
+function pvOpTopNGewijzigd(){
+  const val = document.getElementById('pv-topn').value;
+  pvTopN = val === 'alle' ? 'alle' : parseInt(val, 10);
+  pvTekenGrafiek();
+}
+function pvWisHighlightUI(){
+  document.getElementById('pv-highlight-chip').style.display = 'none';
+  document.getElementById('pv-zoek').value = '';
+}
+function pvWisHighlight(){
+  pvHighlight = null;
+  pvWisHighlightUI();
+  pvTekenGrafiek();
+}
+function pvKiesHighlight(item){
+  pvHighlight = item;
+  document.getElementById('pv-highlight-naam').textContent = item.naam;
+  document.getElementById('pv-highlight-chip').style.display = 'inline-flex';
+  document.getElementById('pv-zoek').value = item.naam;
+  pvTekenGrafiek();
+}
+(function pvInitAutocomplete(){
+  const input = document.getElementById('pv-zoek');
+  const lijst = document.getElementById('pv-ac-lijst');
+  input.addEventListener('input', ()=>{
+    const q = input.value.trim().toLowerCase();
+    if(!q){ lijst.style.display='none'; lijst.innerHTML=''; return; }
+    const bron = pvSoort === 'teams'
+      ? teams.map(t=>({ id: t.id, naam: t.naam }))
+      : deelnemers.map(d=>({ id: d.id, naam: d.naam }));
+    const matches = bron.filter(it=>it.naam.toLowerCase().includes(q)).slice(0, 8);
+    if(!matches.length){ lijst.style.display='none'; lijst.innerHTML=''; return; }
+    lijst.innerHTML = matches.map(it=>`<div class="pv-ac-item" data-id="${it.id}" data-naam="${it.naam.replace(/"/g,'&quot;')}">${it.naam}</div>`).join('');
+    lijst.style.display = 'block';
+  });
+  lijst.addEventListener('click', (e)=>{
+    const item = e.target.closest('.pv-ac-item');
+    if(!item) return;
+    pvKiesHighlight({ id: item.dataset.id, naam: item.dataset.naam });
+    lijst.style.display = 'none';
+  });
+  document.addEventListener('click', (e)=>{
+    if(e.target !== input && !lijst.contains(e.target)) lijst.style.display = 'none';
+  });
+})();
+
+function pvVolledigScherm(){
+  const card = document.getElementById('pv-card');
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if(isFs){
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+  } else {
+    (card.requestFullscreen || card.webkitRequestFullscreen).call(card);
+  }
+}
+function pvOpFullscreenChange(){
+  const canvas = document.getElementById('pv-canvas');
+  if(canvas._pvChart) setTimeout(()=>canvas._pvChart.resize(), 60);
+}
+document.addEventListener('fullscreenchange', pvOpFullscreenChange);
+document.addEventListener('webkitfullscreenchange', pvOpFullscreenChange);
+
+async function pvKopieerAfbeelding(){
+  const canvas = document.getElementById('pv-canvas');
+  if(!canvas._pvChart){ toonToast('Nog geen grafiek om te delen.', true); return; }
+  const titelTekst = document.getElementById('pv-titel').textContent;
+  try{
+    const schaal = canvas.width / canvas.clientWidth || 1;
+    const maxBreedte = canvas.width * 0.92;
+    const meetCtx = document.createElement('canvas').getContext('2d');
+    let fontSize = Math.round(20*schaal);
+    const minFont = Math.round(13*schaal);
+    meetCtx.font = `bold ${fontSize}px Georgia, serif`;
+    while(meetCtx.measureText(titelTekst).width > maxBreedte && fontSize > minFont){
+      fontSize--; meetCtx.font = `bold ${fontSize}px Georgia, serif`;
+    }
+    const titelH = Math.round(fontSize*1.3) + Math.round(20*schaal);
+    const out = document.createElement('canvas');
+    out.width = canvas.width;
+    out.height = canvas.height + titelH;
+    const ctx = out.getContext('2d');
+    ctx.fillStyle = '#F5F0E8'; ctx.fillRect(0,0,out.width,titelH);
+    ctx.fillStyle = '#1A5C1E'; ctx.font = `bold ${fontSize}px Georgia, serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(titelTekst, out.width/2, titelH/2, maxBreedte);
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,titelH,out.width,out.height-titelH);
+    ctx.drawImage(canvas, 0, titelH);
+
+    const blob = await new Promise(r => out.toBlob(r, 'image/png'));
+    if(!blob) throw new Error('Kon geen afbeelding maken.');
+    const bestandsnaam = titelTekst.replace(/[^a-z0-9]+/gi,'_').toLowerCase() + '.png';
+    const bestand = new File([blob], bestandsnaam, { type: 'image/png' });
+
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: [bestand] })){
+      await navigator.share({ files: [bestand], title: titelTekst });
+      return;
+    }
+    if(navigator.clipboard && window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toonToast('Afbeelding gekopieerd!');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = bestandsnaam; a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    toonToast('Afbeelding maken mislukt: ' + e.message, true);
+  }
 }
 
 (async function init(){
