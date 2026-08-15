@@ -164,6 +164,16 @@ Deno.serve(async (req: Request) => {
       rijen,
     };
 
+    // ── POSITIEVERLOOP-SNAPSHOT ──
+    // Elk spel waarvoor al een officiële uitslag is ingevoerd geldt als een
+    // afgeronde "periode". We slaan de tussenstand (individueel + teamklassement)
+    // op onder de periode van het laatst-afgeronde spel (in volgorde), zodat er
+    // per periode een historisch snapshot ontstaat voor de positieverloop-grafiek.
+    // Eerdere periodes blijven ongewijzigd staan zolang ze niet zelf opnieuw de
+    // "laatst-afgeronde" periode zijn — zo ontstaat een chronologische trend.
+    const spelIdsMetUitslag = new Set(alleUitslagen.map((u) => u.spel_id));
+    const voltooideSpellen = alleSpellen.filter((s) => spelIdsMetUitslag.has(s.id));
+
     // Cachen in admin_data (singleton)
     const { data: huidigeAdminData } = await supabase
       .from("admin_data")
@@ -171,7 +181,43 @@ Deno.serve(async (req: Request) => {
       .eq("id", "singleton")
       .single();
 
-    const nieuweData = { ...(huidigeAdminData?.data ?? {}), leaderboard };
+    const huidigePv = huidigeAdminData?.data?.positieverloop ?? { periodes: [], deelnemers: {}, teams: {} };
+
+    if (voltooideSpellen.length) {
+      const laatsteSpel = voltooideSpellen[voltooideSpellen.length - 1];
+
+      const individueelSnapshot = rijen.map((r) => ({ id: r.deelnemer_id, totaal: r.totaal }));
+
+      const perTeam: Record<string, { totaal: number; aantal: number }> = {};
+      rijen.forEach((r) => {
+        if (!r.team_id) return;
+        if (!perTeam[r.team_id]) perTeam[r.team_id] = { totaal: 0, aantal: 0 };
+        perTeam[r.team_id].totaal += r.totaal;
+        perTeam[r.team_id].aantal += 1;
+      });
+      const teamSnapshot = Object.entries(perTeam).map(([teamId, v]) => ({
+        id: teamId,
+        totaal: v.aantal ? Math.round((v.totaal / v.aantal) * 100) / 100 : 0,
+      }));
+
+      const periodeMeta = {
+        spel_id: laatsteSpel.id,
+        naam: laatsteSpel.naam,
+        volgorde: laatsteSpel.volgorde,
+        is_eindstand: !!laatsteSpel.is_eindstand,
+      };
+      const periodes = [...(huidigePv.periodes ?? [])];
+      const idx = periodes.findIndex((p: { spel_id: string }) => p.spel_id === laatsteSpel.id);
+      if (idx === -1) periodes.push(periodeMeta);
+      else periodes[idx] = periodeMeta;
+      periodes.sort((a: { volgorde: number }, b: { volgorde: number }) => a.volgorde - b.volgorde);
+
+      huidigePv.periodes = periodes;
+      huidigePv.deelnemers = { ...(huidigePv.deelnemers ?? {}), [laatsteSpel.id]: individueelSnapshot };
+      huidigePv.teams = { ...(huidigePv.teams ?? {}), [laatsteSpel.id]: teamSnapshot };
+    }
+
+    const nieuweData = { ...(huidigeAdminData?.data ?? {}), leaderboard, positieverloop: huidigePv };
 
     const { error: schrijfErr } = await supabase
       .from("admin_data")
