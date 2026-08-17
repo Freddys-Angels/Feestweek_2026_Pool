@@ -250,6 +250,14 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .pv-overlay-sluit:hover{background:var(--bg3);color:var(--red2);}
 .pv-overlay-chart{flex:1;position:relative;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:10px;}
 .pv-overlay-chart canvas{width:100%!important;height:100%!important;}
+
+/* MUZIEK */
+.mz-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);margin:2px 0 16px;cursor:pointer;user-select:none;}
+.mz-check input{width:16px;height:16px;accent-color:var(--green);cursor:pointer;flex-shrink:0;}
+.mz-toggle{background:none;border:1px solid rgba(240,204,110,.4);color:var(--gold4);font-size:15px;width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.mz-toggle:hover{background:rgba(240,204,110,.15);}
+.mz-toggle.mz-wacht{animation:mzPuls 1.4s ease-in-out infinite;}
+@keyframes mzPuls{0%,100%{box-shadow:0 0 0 0 rgba(240,204,110,.55);}50%{box-shadow:0 0 0 7px rgba(240,204,110,0);}}
 </style>
 </head>
 <body>
@@ -264,6 +272,11 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <div class="gate-tab active" data-gtab="login" onclick="wisselGateTab('login')">Inloggen</div>
       <div class="gate-tab" data-gtab="registreren" onclick="wisselGateTab('registreren')">Registreren</div>
     </div>
+
+    <label class="mz-check">
+      <input type="checkbox" id="muziek-checkbox" checked onchange="mzCheckboxGewijzigd()">
+      🎵 Muziek afspelen in app?
+    </label>
 
     <!-- LOGIN -->
     <div id="gtab-login">
@@ -307,10 +320,13 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
   <header class="hdr">
     <h1 class="hdr-titel"><span class="hdr-sub">Freddy's Angels — Feestweek 2026 ·</span><span class="hdr-1001">1001 nachten in Vijfhuizen</span></h1>
     <div class="hdr-right">
+      <button class="mz-toggle" id="mz-toggle-btn" onclick="mzToggle()" title="Muziek aan/uit">🔈</button>
       <span class="hdr-naam" id="hdr-naam"></span>
       <button class="hdr-uitloggen" onclick="doeUitloggen()">Uitloggen</button>
     </div>
   </header>
+
+  <audio id="mz-audio" loop preload="none" src="https://hetcbiybjdsjkusrqocl.supabase.co/storage/v1/object/public/MP3/Jungle%20by%20Night%20-%20Stormvogel.mp3"></audio>
 
   <nav class="tabs">
     <div class="tab" data-tab="tussenstand" onclick="wisselTab(this)">📈 Tussenstand</div>
@@ -571,6 +587,7 @@ document.addEventListener('click', (e)=>{
 
 // ── AUTH ──
 async function doeLogin(){
+  mzProbeerStarten();
   const email = document.getElementById('login-email').value.trim();
   const ww = document.getElementById('login-ww').value;
   const err = document.getElementById('login-err');
@@ -596,6 +613,7 @@ async function doeLogin(){
 }
 
 async function doeRegistreren(){
+  mzProbeerStarten();
   const naam = document.getElementById('reg-naam').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const ww = document.getElementById('reg-ww').value;
@@ -1508,6 +1526,7 @@ async function startApp(){
     const tussenstandTab = document.querySelector('.tab[data-tab="tussenstand"]');
     if(tussenstandTab) wisselTab(tussenstandTab);
   }
+  mzUpdateIcon();
 }
 
 // ══════════════════ POSITIEVERLOOP ══════════════════
@@ -1714,12 +1733,68 @@ function pvSluitOverlay(){
   document.getElementById('pv-overlay').classList.remove('open');
 }
 
+// ══════════════════ MUZIEK ══════════════════
+const MZ_KEY = 'fw2026_muziek_aan';
+function mzVoorkeurAan(){
+  const opgeslagen = localStorage.getItem(MZ_KEY);
+  return opgeslagen === null ? true : opgeslagen === '1'; // standaard aan
+}
+function mzZetVoorkeur(aan){
+  localStorage.setItem(MZ_KEY, aan ? '1' : '0');
+}
+function mzCheckboxGewijzigd(){
+  mzZetVoorkeur(document.getElementById('muziek-checkbox').checked);
+}
+function mzUpdateIcon(){
+  const btn = document.getElementById('mz-toggle-btn');
+  const audio = document.getElementById('mz-audio');
+  if(!btn || !audio) return;
+  const speelt = !audio.paused;
+  btn.textContent = speelt ? '🔊' : '🔈';
+  btn.title = speelt ? 'Muziek uitzetten' : (mzVoorkeurAan() ? 'Tik om muziek te starten' : 'Muziek aanzetten');
+  btn.classList.toggle('mz-wacht', !speelt && mzVoorkeurAan());
+}
+// Alleen aanroepen vanuit een échte gebruikershandeling (klik) — anders blokkeert de browser dit stilletjes.
+function mzProbeerStarten(){
+  if(!mzVoorkeurAan()) return;
+  const audio = document.getElementById('mz-audio');
+  if(!audio || !audio.paused) return;
+  const p = audio.play();
+  if(p && p.catch) p.catch(()=>{ /* autoplay geblokkeerd — icoon in header gaat pulsen, gebruiker tikt zelf */ });
+  setTimeout(mzUpdateIcon, 150);
+}
+function mzToggle(){
+  const audio = document.getElementById('mz-audio');
+  const cb = document.getElementById('muziek-checkbox');
+  if(!audio) return;
+  if(audio.paused){
+    audio.play().catch(()=>{});
+    mzZetVoorkeur(true);
+    if(cb) cb.checked = true;
+  } else {
+    audio.pause();
+    mzZetVoorkeur(false);
+    if(cb) cb.checked = false;
+  }
+  setTimeout(mzUpdateIcon, 100);
+}
+(function mzInitListeners(){
+  const audio = document.getElementById('mz-audio');
+  if(!audio) return;
+  audio.addEventListener('play', mzUpdateIcon);
+  audio.addEventListener('pause', mzUpdateIcon);
+})();
+
 (async function init(){
+  const mzBox = document.getElementById('muziek-checkbox');
+  if(mzBox) mzBox.checked = mzVoorkeurAan();
+
   const opgeslagen = localStorage.getItem('fw2026_sessie');
   if(opgeslagen){
     try{
       sessie = JSON.parse(opgeslagen);
       await startApp();
+      mzProbeerStarten(); // geen klik geweest deze sessie — browser kan dit blokkeren, icoon gaat dan pulsen
       return;
     }catch(e){
       localStorage.removeItem('fw2026_sessie');
