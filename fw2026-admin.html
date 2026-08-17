@@ -22,10 +22,10 @@
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-size:15px;min-height:100vh;}
 .header{background:var(--green);border-bottom:3px solid var(--gold2);box-shadow:0 2px 12px rgba(0,0,0,.2);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;gap:10px;}
-.hdr-titel{display:flex;flex-direction:column;justify-content:center;line-height:1.15;overflow:hidden;min-width:0;}
-.hdr-sub{font-family:'Lato',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:rgba(240,204,110,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.hdr-1001{font-family:'Aladin',cursive;font-size:22px;font-weight:400;letter-spacing:.4px;color:var(--gold4);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-@media(max-width:400px){.hdr-1001{font-size:18px;}.hdr-sub{font-size:8px;}}
+.hdr-titel{display:flex;align-items:baseline;gap:8px;overflow:hidden;min-width:0;white-space:nowrap;}
+.hdr-sub{font-family:'Rye',cursive;font-size:16px;letter-spacing:1px;color:var(--gold4);flex-shrink:0;}
+.hdr-1001{font-family:'Aladin',cursive;font-size:20px;font-weight:400;letter-spacing:.4px;color:var(--gold4);overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:480px){.hdr-sub{font-size:13px;}.hdr-1001{font-size:16px;}}
 .admin-badge{background:var(--gold2);color:var(--white);font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;margin-left:10px;flex-shrink:0;}
 .hdr-uitloggen{background:none;border:1px solid rgba(240,204,110,.4);color:var(--gold4);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;}
 .tabs{display:flex;background:var(--green);border-bottom:2px solid var(--gold2);padding:0 24px;overflow-x:auto;scrollbar-width:none;position:sticky;top:64px;z-index:99;}
@@ -185,7 +185,7 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 <div id="app" style="display:none">
   <header class="header">
     <div style="display:flex;align-items:center;min-width:0;overflow:hidden">
-      <h1 class="hdr-titel"><span class="hdr-sub">Freddy's Angels — Feestweek 2026</span><span class="hdr-1001">1001 nachten in Vijfhuizen</span></h1>
+      <h1 class="hdr-titel"><span class="hdr-sub">Freddy's Angels — Feestweek 2026 ·</span><span class="hdr-1001">1001 nachten in Vijfhuizen</span></h1>
       <span class="admin-badge">BEHEER</span>
     </div>
     <button class="hdr-uitloggen" onclick="doeUitloggen()">Uitloggen</button>
