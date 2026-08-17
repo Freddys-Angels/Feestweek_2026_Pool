@@ -1787,6 +1787,15 @@ function mzToggle(){
   audio.addEventListener('pause', mzUpdateIcon);
 })();
 
+// Start de muziek al op het inlogscherm zelf, zodra iemand ergens op de pagina
+// tikt/klikt/typt — dat telt als geldige gebruikershandeling voor de browser,
+// dus dan hoeft niet gewacht te worden tot de daadwerkelijke inlog-klik.
+(function mzWachtOpEersteInteractie(){
+  const start = () => { mzProbeerStarten(); };
+  document.addEventListener('pointerdown', start, { once: true });
+  document.addEventListener('keydown', start, { once: true });
+})();
+
 (async function init(){
   const mzBox = document.getElementById('muziek-checkbox');
   if(mzBox) mzBox.checked = mzVoorkeurAan();
