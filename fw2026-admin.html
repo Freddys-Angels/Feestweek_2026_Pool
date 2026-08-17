@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231A5C1E'/%3E%3Ctext y='82' x='50' text-anchor='middle' font-size='85' fill='%23CC0000'%3E%E2%98%85%3C/text%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Freddy's Angels — Feestweek 2026 · Beheer</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Rye&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Rye&family=Aladin&family=Lato:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#F5F0E8;--bg2:#EDE8DB;--bg3:#F9F6F0;
@@ -21,10 +21,12 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-size:15px;min-height:100vh;}
-.header{background:var(--green);border-bottom:3px solid var(--gold2);box-shadow:0 2px 12px rgba(0,0,0,.2);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;}
-.header h1{font-family:'Rye',cursive;font-size:17px;letter-spacing:1.2px;color:var(--gold4);}
-.header h1 em{font-style:normal;color:#F5F0E8;}
-.admin-badge{background:var(--gold2);color:var(--white);font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;margin-left:10px;}
+.header{background:var(--green);border-bottom:3px solid var(--gold2);box-shadow:0 2px 12px rgba(0,0,0,.2);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100;gap:10px;}
+.hdr-titel{display:flex;flex-direction:column;justify-content:center;line-height:1.15;overflow:hidden;min-width:0;}
+.hdr-sub{font-family:'Lato',sans-serif;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:rgba(240,204,110,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-1001{font-family:'Aladin',cursive;font-size:22px;font-weight:400;letter-spacing:.4px;color:var(--gold4);line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+@media(max-width:400px){.hdr-1001{font-size:18px;}.hdr-sub{font-size:8px;}}
+.admin-badge{background:var(--gold2);color:var(--white);font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px;margin-left:10px;flex-shrink:0;}
 .hdr-uitloggen{background:none;border:1px solid rgba(240,204,110,.4);color:var(--gold4);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;}
 .tabs{display:flex;background:var(--green);border-bottom:2px solid var(--gold2);padding:0 24px;overflow-x:auto;scrollbar-width:none;position:sticky;top:64px;z-index:99;}
 .tabs::-webkit-scrollbar{display:none;}
@@ -182,8 +184,8 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 
 <div id="app" style="display:none">
   <header class="header">
-    <div style="display:flex;align-items:center">
-      <h1>Freddy's Angels <em>— Feestweek 2026</em></h1>
+    <div style="display:flex;align-items:center;min-width:0;overflow:hidden">
+      <h1 class="hdr-titel"><span class="hdr-sub">Freddy's Angels — Feestweek 2026</span><span class="hdr-1001">1001 nachten in Vijfhuizen</span></h1>
       <span class="admin-badge">BEHEER</span>
     </div>
     <button class="hdr-uitloggen" onclick="doeUitloggen()">Uitloggen</button>
