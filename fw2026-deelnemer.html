@@ -615,7 +615,6 @@ async function doeLogin(){
 }
 
 async function doeRegistreren(){
-  mzProbeerStarten();
   const naam = document.getElementById('reg-naam').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const ww = document.getElementById('reg-ww').value;
@@ -1787,13 +1786,17 @@ function mzToggle(){
   audio.addEventListener('pause', mzUpdateIcon);
 })();
 
-// Start de muziek al op het inlogscherm zelf, zodra iemand ergens op de pagina
-// tikt/klikt/typt — dat telt als geldige gebruikershandeling voor de browser,
-// dus dan hoeft niet gewacht te worden tot de daadwerkelijke inlog-klik.
+// Start de muziek al zodra iemand ergens in het inlog-tabblad tikt/klikt/typt
+// (e-mailveld, wachtwoordveld, inlogknop, "wachtwoord vergeten") — dat telt als
+// geldige gebruikershandeling voor de browser. Bewust NIET op het hele
+// inlogscherm of het registreer-tabblad, zodat een nieuw account aanmaken de
+// muziek niet start — alleen inloggen doet dat.
 (function mzWachtOpEersteInteractie(){
+  const loginTab = document.getElementById('gtab-login');
+  if(!loginTab) return;
   const start = () => { mzProbeerStarten(); };
-  document.addEventListener('pointerdown', start, { once: true });
-  document.addEventListener('keydown', start, { once: true });
+  loginTab.addEventListener('pointerdown', start, { once: true });
+  loginTab.addEventListener('keydown', start, { once: true });
 })();
 
 (async function init(){
