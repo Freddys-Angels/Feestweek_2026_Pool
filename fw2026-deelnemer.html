@@ -1786,19 +1786,6 @@ function mzToggle(){
   audio.addEventListener('pause', mzUpdateIcon);
 })();
 
-// Start de muziek al zodra iemand ergens in het inlog-tabblad tikt/klikt/typt
-// (e-mailveld, wachtwoordveld, inlogknop, "wachtwoord vergeten") — dat telt als
-// geldige gebruikershandeling voor de browser. Bewust NIET op het hele
-// inlogscherm of het registreer-tabblad, zodat een nieuw account aanmaken de
-// muziek niet start — alleen inloggen doet dat.
-(function mzWachtOpEersteInteractie(){
-  const loginTab = document.getElementById('gtab-login');
-  if(!loginTab) return;
-  const start = () => { mzProbeerStarten(); };
-  loginTab.addEventListener('pointerdown', start, { once: true });
-  loginTab.addEventListener('keydown', start, { once: true });
-})();
-
 (async function init(){
   const mzBox = document.getElementById('muziek-checkbox');
   if(mzBox) mzBox.checked = mzVoorkeurAan();
