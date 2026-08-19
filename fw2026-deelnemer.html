@@ -63,6 +63,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .err{color:var(--red2);font-size:12px;margin:2px 0 6px;min-height:16px;}
 .gate-link{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;cursor:pointer;text-decoration:underline;}
 .gate-msg{font-size:12px;color:var(--green);background:var(--green3);border:1px solid var(--green2);border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6;}
+.gate-msg-vol{color:var(--red2);background:#FEF2F2;border-color:#F5C6C6;}
 
 /* COMBOBOX (zoekbare team-select) */
 .combo{position:relative;margin-bottom:8px;}
@@ -310,7 +311,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <input type="email" class="gate-field" id="reset-email" placeholder="E-mailadres">
       <div class="err" id="reset-err"></div>
       <div class="gate-msg" id="reset-msg" style="display:none"></div>
-      <button class="btn btn-full btn-gold" onclick="doeResetAanvraag()">Verstuur resetlink</button>
+      <div class="gate-msg gate-msg-vol" id="reset-vol" style="display:none">📪 E-mailserver is vandaag vol. Probeer het morgen weer.</div>
+      <button class="btn btn-full btn-gold" onclick="doeResetAanvraag()" id="reset-btn">Verstuur resetlink</button>
       <div class="gate-link" onclick="wisselGateTab('login')">← Terug naar inloggen</div>
     </div>
   </div>
@@ -547,6 +549,7 @@ function wisselGateTab(naam){
   document.getElementById('gtab-login').style.display = naam==='login' ? 'block':'none';
   document.getElementById('gtab-registreren').style.display = naam==='registreren' ? 'block':'none';
   document.getElementById('gtab-reset').style.display = naam==='reset' ? 'block':'none';
+  if(naam === 'reset') checkResetKnopBeschikbaar();
 }
 
 // ── ZOEKBARE TEAM-COMBOBOX (registratie) ──
@@ -627,18 +630,21 @@ async function doeRegistreren(){
   const btn = document.getElementById('reg-btn');
   btn.disabled = true; btn.textContent = 'Bezig...';
   try{
-    const redirectTo = encodeURIComponent(window.location.origin + window.location.pathname);
-    const res = await fetch(`${SB_URL}/auth/v1/signup?redirect_to=${redirectTo}`, {
-      method:'POST', headers: hdrs(false),
-      body: JSON.stringify({ email, password: ww, data: { naam, team_id: gekozenTeamId || '' } })
+    const redirectTo = window.location.origin + window.location.pathname;
+    const res = await fetch(`${SB_URL}/functions/v1/fw2026-registreren`, {
+      method: 'POST', headers: hdrs(false),
+      body: JSON.stringify({ naam, email, wachtwoord: ww, team_id: gekozenTeamId || '', redirect_to: redirectTo })
     });
     const data = await res.json();
-    if(!res.ok){ err.textContent = data.error_description || data.msg || 'Registreren mislukt.'; return; }
+    if(!res.ok || !data.ok){ err.textContent = data.error || 'Registreren mislukt.'; return; }
 
-    if(data.access_token){
+    if(data.modus === 'direct' || data.modus === 'auto'){
       sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
       localStorage.setItem('fw2026_sessie', JSON.stringify(sessie));
       await startApp();
+      if(data.modus === 'auto'){
+        toonToast('Account aangemaakt en direct ingelogd!');
+      }
     } else {
       wisselGateTab('login');
       toonToast('Account aangemaakt! Check je e-mail om te bevestigen, log daarna in.');
@@ -650,21 +656,64 @@ async function doeRegistreren(){
   }
 }
 
+async function haalMailTellerStatus(){
+  try{
+    const vandaag = new Date().toISOString().slice(0,10);
+    const res = await fetch(`${SB_URL}/rest/v1/email_teller?select=emails_verstuurd&datum=eq.${vandaag}`, { headers: hdrs(false) });
+    const arr = await res.json();
+    return arr[0]?.emails_verstuurd ?? 0;
+  }catch(e){
+    return 0; // bij twijfel: niet blokkeren, gewoon proberen
+  }
+}
+
+async function checkResetKnopBeschikbaar(){
+  const btn = document.getElementById('reset-btn');
+  const vol = document.getElementById('reset-vol');
+  document.getElementById('reset-msg').style.display = 'none';
+  document.getElementById('reset-err').textContent = '';
+  const aantal = await haalMailTellerStatus();
+  if(aantal >= 100){
+    btn.disabled = true;
+    vol.style.display = 'block';
+  } else {
+    btn.disabled = false;
+    vol.style.display = 'none';
+  }
+}
+
 async function doeResetAanvraag(){
   const email = document.getElementById('reset-email').value.trim();
   const err = document.getElementById('reset-err');
   const msg = document.getElementById('reset-msg');
+  const vol = document.getElementById('reset-vol');
   err.textContent = ''; msg.style.display = 'none';
   if(!email){ err.textContent = 'Vul je e-mailadres in.'; return; }
+  const btn = document.getElementById('reset-btn');
+  btn.disabled = true; btn.textContent = 'Bezig...';
+  let bleefVol = false;
   try{
-    const redirectTo = encodeURIComponent(window.location.origin + window.location.pathname);
-    await fetch(`${SB_URL}/auth/v1/recover?redirect_to=${redirectTo}`, {
-      method:'POST', headers: hdrs(false), body: JSON.stringify({ email })
+    const redirectTo = window.location.origin + window.location.pathname;
+    const res = await fetch(`${SB_URL}/functions/v1/fw2026-wachtwoord-vergeten`, {
+      method: 'POST', headers: hdrs(false), body: JSON.stringify({ email, redirect_to: redirectTo })
     });
+    const data = await res.json();
+    if(!res.ok || !data.ok){
+      if(data.reden === 'vol'){
+        vol.style.display = 'block';
+        bleefVol = true;
+      } else {
+        err.textContent = data.error || 'Aanvragen mislukt.';
+      }
+      return;
+    }
     msg.textContent = 'Als dit e-mailadres bekend is, is er een resetlink verstuurd.';
     msg.style.display = 'block';
   }catch(e){
     err.textContent = 'Netwerkfout, probeer opnieuw.';
+  }finally{
+    btn.textContent = 'Verstuur resetlink';
+    btn.disabled = bleefVol;
   }
 }
 
