@@ -81,6 +81,8 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 .gate-link{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;cursor:pointer;text-decoration:underline;}
 .gate-msg{font-size:12px;color:var(--green);background:var(--green3);border:1px solid var(--green2);border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.6;}
 .gate-msg-vol{color:var(--red2);background:#FEF2F2;border-color:#F5C6C6;}
+.reg-gesloten-icon{text-align:center;font-size:40px;margin-bottom:8px;opacity:.85;}
+.gate-tab.gesloten{opacity:.6;}
 
 /* COMBOBOX (zoekbare team-select) */
 .combo{position:relative;margin-bottom:8px;}
@@ -309,17 +311,25 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
 
     <!-- REGISTREREN -->
     <div id="gtab-registreren" style="display:none">
-      <h2>Nieuw account</h2>
-      <input type="text" class="gate-field" id="reg-naam" placeholder="Je naam">
-      <input type="email" class="gate-field" id="reg-email" placeholder="E-mailadres" autocomplete="username">
-      <input type="password" class="gate-field" id="reg-ww" placeholder="Wachtwoord (min. 6 tekens)" autocomplete="new-password">
-      <input type="password" class="gate-field" id="reg-ww2" placeholder="Herhaal wachtwoord" autocomplete="new-password">
-      <div class="combo" id="reg-team-combo">
-        <input type="text" class="combo-input" id="reg-team-input" placeholder="Kies je team (verplicht — of 'Geen team')" autocomplete="off">
-        <div class="combo-list" id="reg-team-list"></div>
+      <div id="reg-gesloten" style="display:none">
+        <div class="reg-gesloten-icon">🔒</div>
+        <h2>Inschrijving gesloten</h2>
+        <p style="font-size:13px;color:var(--muted);text-align:center;line-height:1.7;margin-bottom:16px">De Feestweek is begonnen — nieuwe aanmeldingen zijn niet meer mogelijk.<br>Heb je al een account? Log dan hiernaast in.</p>
+        <button class="btn btn-full btn-gold" onclick="wisselGateTab('login')">← Naar inloggen</button>
       </div>
-      <div class="err" id="reg-err"></div>
-      <button class="btn btn-full btn-gold" onclick="doeRegistreren()" id="reg-btn">Account aanmaken</button>
+      <div id="reg-formulier">
+        <h2>Nieuw account</h2>
+        <input type="text" class="gate-field" id="reg-naam" placeholder="Je naam">
+        <input type="email" class="gate-field" id="reg-email" placeholder="E-mailadres" autocomplete="username">
+        <input type="password" class="gate-field" id="reg-ww" placeholder="Wachtwoord (min. 6 tekens)" autocomplete="new-password">
+        <input type="password" class="gate-field" id="reg-ww2" placeholder="Herhaal wachtwoord" autocomplete="new-password">
+        <div class="combo" id="reg-team-combo">
+          <input type="text" class="combo-input" id="reg-team-input" placeholder="Kies je team (verplicht — of 'Geen team')" autocomplete="off">
+          <div class="combo-list" id="reg-team-list"></div>
+        </div>
+        <div class="err" id="reg-err"></div>
+        <button class="btn btn-full btn-gold" onclick="doeRegistreren()" id="reg-btn">Account aanmaken</button>
+      </div>
     </div>
 
     <!-- WACHTWOORD RESET -->
@@ -573,6 +583,9 @@ function toonToast(msg, isErr){
 }
 
 // ── GATE TABS ──
+const REGISTRATIE_SLUIT = new Date('2026-09-07T19:00:00'); // gelijk aan sluitingstijd spellen
+function isRegistratieGesloten(){ return new Date() >= REGISTRATIE_SLUIT; }
+
 function wisselGateTab(naam){
   document.querySelectorAll('.gate-tab').forEach(t=>t.classList.toggle('active', t.dataset.gtab===naam));
   document.getElementById('gtab-login').style.display = naam==='login' ? 'block':'none';
@@ -581,6 +594,22 @@ function wisselGateTab(naam){
   document.getElementById('gtab-nieuwwachtwoord').style.display = naam==='nieuwwachtwoord' ? 'block':'none';
   document.querySelector('.gate-tabs').style.display = naam==='nieuwwachtwoord' ? 'none':'flex';
   if(naam === 'reset') checkResetKnopBeschikbaar();
+  if(naam === 'registreren'){
+    const gesloten = isRegistratieGesloten();
+    document.getElementById('reg-gesloten').style.display = gesloten ? 'block' : 'none';
+    document.getElementById('reg-formulier').style.display = gesloten ? 'none' : 'block';
+  }
+}
+function updateRegistratieTabLabel(){
+  const tab = document.querySelector('.gate-tab[data-gtab="registreren"]');
+  if(!tab) return;
+  if(isRegistratieGesloten()){
+    tab.textContent = '🔒 Registreren';
+    tab.classList.add('gesloten');
+  } else {
+    tab.textContent = 'Registreren';
+    tab.classList.remove('gesloten');
+  }
 }
 
 // ── ZOEKBARE TEAM-COMBOBOX (registratie) ──
@@ -649,6 +678,7 @@ async function doeLogin(){
 }
 
 async function doeRegistreren(){
+  if(isRegistratieGesloten()){ wisselGateTab('registreren'); return; }
   const naam = document.getElementById('reg-naam').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const ww = document.getElementById('reg-ww').value;
@@ -669,7 +699,10 @@ async function doeRegistreren(){
       body: JSON.stringify({ naam, email, wachtwoord: ww, team_id: gekozenTeamId || '', redirect_to: redirectTo })
     });
     const data = await res.json();
-    if(!res.ok || !data.ok){ err.textContent = data.error || 'Registreren mislukt.'; return; }
+    if(!res.ok || !data.ok){
+      if(data.reden === 'gesloten'){ wisselGateTab('registreren'); return; }
+      err.textContent = data.error || 'Registreren mislukt.'; return;
+    }
 
     if(data.modus === 'direct' || data.modus === 'auto'){
       sessie = { access_token: data.access_token, refresh_token: data.refresh_token, user: data.user };
@@ -1926,6 +1959,7 @@ function mzToggle(){
 (async function init(){
   const mzBox = document.getElementById('muziek-checkbox');
   if(mzBox) mzBox.checked = mzVoorkeurAan();
+  updateRegistratieTabLabel();
 
   const authHash = verwerkAuthHash();
   if(authHash && authHash.type === 'recovery'){
