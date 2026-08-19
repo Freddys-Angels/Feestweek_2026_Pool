@@ -977,11 +977,13 @@ function bekijkInvulling(deelnemerId){
   const supercupHtml = eindstandSpellen.length ? eindstandSpellen.map(spelBlok).join('') : '<div class="inv-leeg">Nog geen supercup aangemaakt.</div>';
 
   const bonusHtml = bonusvragen.length ? bonusvragen.map(b=>{
-    const antwoord = bonusAntwoorden[b.id];
-    const heeftAntwoord = antwoord !== undefined && antwoord !== null && antwoord !== '';
+    const antwoordRaw = bonusAntwoorden[b.id];
+    const heeftAntwoord = antwoordRaw !== undefined && antwoordRaw !== null && antwoordRaw !== '';
+    const cfg = BONUS_INPUT_CONFIG[b.volgorde];
+    const antwoordWeergave = heeftAntwoord ? (cfg?.type === 'team' ? teamNaam(antwoordRaw) : antwoordRaw) : null;
     return `<div class="inv-bonus-item">
       <div class="inv-bonus-vraag">${b.vraag} <span style="color:var(--muted);font-weight:400">(${b.punten}pt)</span></div>
-      <div class="inv-bonus-antwoord">${heeftAntwoord ? antwoord : '<em>— nog niet ingevuld —</em>'}</div>
+      <div class="inv-bonus-antwoord">${heeftAntwoord ? antwoordWeergave : '<em>— nog niet ingevuld —</em>'}</div>
     </div>`;
   }).join('') : '<div class="inv-leeg">Geen bonusvragen.</div>';
 
