@@ -150,6 +150,36 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 .del-btn{border:none;background:transparent;color:var(--red2);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px;}
 .del-btn:hover{color:var(--red);}
 
+/* INVULLING-MODAL */
+.inv-modal{display:none;position:fixed;inset:0;background:rgba(26,44,20,.55);z-index:600;align-items:flex-start;justify-content:center;padding:26px 16px;overflow-y:auto;}
+.inv-modal.open{display:flex;}
+.inv-card{background:var(--white);border-radius:10px;max-width:640px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);margin-top:10px;}
+.inv-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 22px;background:var(--green);border-radius:10px 10px 0 0;}
+.inv-hdr-titel{font-family:'Playfair Display',serif;font-weight:900;color:var(--white);font-size:19px;}
+.inv-hdr-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:4px;}
+.inv-close{border:none;background:rgba(255,255,255,.15);color:var(--white);font-size:18px;width:30px;height:30px;border-radius:50%;cursor:pointer;line-height:1;flex-shrink:0;}
+.inv-close:hover{background:rgba(255,255,255,.28);}
+.inv-body{padding:20px 22px;max-height:72vh;overflow-y:auto;}
+.inv-sectie{margin-bottom:22px;}
+.inv-sectie:last-child{margin-bottom:0;}
+.inv-sectie-titel{font-family:'Playfair Display',serif;font-weight:900;color:var(--green);font-size:14px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--green3);}
+.inv-spel{margin-bottom:12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
+.inv-spel:last-child{margin-bottom:0;}
+.inv-spel-titel{font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;}
+.inv-cat-rij{display:flex;gap:20px;flex-wrap:wrap;}
+.inv-cat{flex:1;min-width:140px;}
+.inv-cat-naam{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.inv-joker{color:var(--gold);text-transform:none;letter-spacing:0;font-weight:700;}
+.inv-pos{font-size:13px;color:var(--text2);padding:1px 0;}
+.inv-pos-nr{font-weight:700;color:var(--green);margin-right:3px;}
+.inv-leeg{font-size:13px;color:var(--muted);text-align:center;padding:10px;}
+.inv-bonus-item{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--bg2);}
+.inv-bonus-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.inv-bonus-vraag{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.inv-bonus-antwoord{font-size:13px;color:var(--text2);}
+.bekijk-btn{border:1px solid var(--border2);background:var(--white);color:var(--green);font-size:14px;cursor:pointer;line-height:1;padding:5px 8px;border-radius:6px;}
+.bekijk-btn:hover{background:var(--green3);border-color:var(--green2);}
+
 /* POSITIEVERLOOP */
 .pv-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
 .pv-card:fullscreen{border-radius:0;padding:20px;display:flex;flex-direction:column;}
@@ -361,10 +391,11 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
               <th class="center" title="Bonusvragen">⭐ Bonus</th>
               <th class="center">Betaald</th>
               <th class="center" title="Kopieer reminderbericht">📋</th>
+              <th class="center" title="Bekijk volledige invulling">🔍</th>
               <th></th>
             </tr>
           </thead>
-          <tbody id="deelnemers-tbody"><tr><td colspan="10" class="loading">Laden...</td></tr></tbody>
+          <tbody id="deelnemers-tbody"><tr><td colspan="11" class="loading">Laden...</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -373,6 +404,20 @@ table.beheer th.center,table.beheer td.center{text-align:center;}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- INVULLING-MODAL -->
+<div class="inv-modal" id="inv-modal" onclick="if(event.target===this) sluitInvulling()">
+  <div class="inv-card">
+    <div class="inv-hdr">
+      <div>
+        <div class="inv-hdr-titel" id="inv-titel">—</div>
+        <div class="inv-hdr-sub" id="inv-sub"></div>
+      </div>
+      <button class="inv-close" onclick="sluitInvulling()">✕</button>
+    </div>
+    <div class="inv-body" id="inv-body"></div>
+  </div>
+</div>
 
 <script>
 const SB_URL = 'https://hetcbiybjdsjkusrqocl.supabase.co';
@@ -875,7 +920,7 @@ function renderDeelnemers(){
   if(dlFilter==='betaald') gefilterd = gefilterd.filter(x=>x.d.betaald);
 
   if(!gefilterd.length){
-    tbody.innerHTML = `<tr><td colspan="10" class="loading">${totaal ? 'Geen deelnemers gevonden.' : 'Nog geen deelnemers.'}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="loading">${totaal ? 'Geen deelnemers gevonden.' : 'Nog geen deelnemers.'}</td></tr>`;
     return;
   }
 
@@ -892,10 +937,67 @@ function renderDeelnemers(){
       <td class="center">${pillHtml(v.bonusIngevuld, v.bonusTotaal)}</td>
       <td class="center"><button class="betaald-toggle${d.betaald?' betaald-on':''}" onclick="toggleBetaald('${d.id}')">${d.betaald ? '✓ Betaald' : '— Niet betaald'}</button></td>
       <td class="center"><button class="copy-btn" title="Kopieer reminderbericht" onclick="kopieerReminder('${d.id}','${safeNaam}', this)">📋</button></td>
+      <td class="center"><button class="bekijk-btn" title="Bekijk volledige invulling" onclick="bekijkInvulling('${d.id}')">🔍</button></td>
       <td><button class="del-btn" onclick="verwijderDeelnemer('${d.id}','${safeNaam}')" title="Verwijderen">×</button></td>
     </tr>`;
   }).join('');
 }
+
+function bekijkInvulling(deelnemerId){
+  const d = deelnemers.find(x=>x.id===deelnemerId);
+  if(!d) return;
+  const vp = voorspellingen.find(v=>v.deelnemer_id===deelnemerId);
+  const preds = vp?.predictions || {};
+  const bonusAntwoorden = vp?.bonus_antwoorden || {};
+
+  const gewoneSpellen = spellen.filter(s=>!s.is_eindstand).sort((a,b)=>a.volgorde-b.volgorde);
+  const eindstandSpellen = spellen.filter(s=>s.is_eindstand).sort((a,b)=>a.volgorde-b.volgorde);
+
+  function spelBlok(s){
+    const catsHtml = ['heren','dames'].map(cat=>{
+      const p = preds?.[s.id]?.[cat] || {};
+      const isJoker = (cat==='heren' && d.joker_heren_spel_id===s.id) || (cat==='dames' && d.joker_dames_spel_id===s.id);
+      const posities = [1,2,3].map(pos=>{
+        const teamId = p[String(pos)];
+        const naam = teamId ? teamNaam(teamId) : '<em>— niet ingevuld —</em>';
+        return `<div class="inv-pos"><span class="inv-pos-nr">${pos}.</span> ${naam}</div>`;
+      }).join('');
+      return `<div class="inv-cat">
+        <div class="inv-cat-naam">${cat==='heren'?'♂ Heren':'♀ Dames'}${isJoker?' <span class="inv-joker">🃏 joker</span>':''}</div>
+        ${posities}
+      </div>`;
+    }).join('');
+    return `<div class="inv-spel">
+      <div class="inv-spel-titel">${s.volledige_naam || s.naam}</div>
+      <div class="inv-cat-rij">${catsHtml}</div>
+    </div>`;
+  }
+
+  const spellenHtml = gewoneSpellen.length ? gewoneSpellen.map(spelBlok).join('') : '<div class="inv-leeg">Nog geen spellen aangemaakt.</div>';
+  const supercupHtml = eindstandSpellen.length ? eindstandSpellen.map(spelBlok).join('') : '<div class="inv-leeg">Nog geen supercup aangemaakt.</div>';
+
+  const bonusHtml = bonusvragen.length ? bonusvragen.map(b=>{
+    const antwoord = bonusAntwoorden[b.id];
+    const heeftAntwoord = antwoord !== undefined && antwoord !== null && antwoord !== '';
+    return `<div class="inv-bonus-item">
+      <div class="inv-bonus-vraag">${b.vraag} <span style="color:var(--muted);font-weight:400">(${b.punten}pt)</span></div>
+      <div class="inv-bonus-antwoord">${heeftAntwoord ? antwoord : '<em>— nog niet ingevuld —</em>'}</div>
+    </div>`;
+  }).join('') : '<div class="inv-leeg">Geen bonusvragen.</div>';
+
+  document.getElementById('inv-titel').textContent = d.naam;
+  document.getElementById('inv-sub').textContent = [d.team_id ? teamNaam(d.team_id) : 'Geen team', d.email, d.betaald ? '✓ Betaald' : '— Niet betaald'].filter(Boolean).join(' · ');
+  document.getElementById('inv-body').innerHTML = `
+    <div class="inv-sectie"><div class="inv-sectie-titel">🎯 Spellen</div>${spellenHtml}</div>
+    <div class="inv-sectie"><div class="inv-sectie-titel">🏆 Supercup</div>${supercupHtml}</div>
+    <div class="inv-sectie"><div class="inv-sectie-titel">⭐ Bonusvragen</div>${bonusHtml}</div>
+  `;
+  document.getElementById('inv-modal').classList.add('open');
+}
+function sluitInvulling(){
+  document.getElementById('inv-modal').classList.remove('open');
+}
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') sluitInvulling(); });
 
 async function toggleBetaald(id){
   const d = deelnemers.find(x=>x.id===id);
