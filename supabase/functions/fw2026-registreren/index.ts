@@ -22,6 +22,7 @@ const CORS_HEADERS = {
 };
 
 const REGISTRATIE_MAIL_GRENS = 90; // vanaf hier: auto-bevestigen, geen mail meer
+const REGISTRATIE_SLUIT = new Date("2026-09-07T19:00:00+02:00"); // gelijk aan sluitingstijd spellen
 
 function jsonRespons(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -34,6 +35,13 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS_HEADERS });
 
   try {
+    if (new Date() >= REGISTRATIE_SLUIT) {
+      return jsonRespons(
+        { ok: false, reden: "gesloten", error: "De inschrijving is gesloten — de Feestweek is al begonnen." },
+        403,
+      );
+    }
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
