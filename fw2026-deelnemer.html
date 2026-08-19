@@ -296,6 +296,7 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <input type="text" class="gate-field" id="reg-naam" placeholder="Je naam">
       <input type="email" class="gate-field" id="reg-email" placeholder="E-mailadres" autocomplete="username">
       <input type="password" class="gate-field" id="reg-ww" placeholder="Wachtwoord (min. 6 tekens)" autocomplete="new-password">
+      <input type="password" class="gate-field" id="reg-ww2" placeholder="Herhaal wachtwoord" autocomplete="new-password">
       <div class="combo" id="reg-team-combo">
         <input type="text" class="combo-input" id="reg-team-input" placeholder="Kies je team (verplicht — of 'Geen team')" autocomplete="off">
         <div class="combo-list" id="reg-team-list"></div>
@@ -314,6 +315,16 @@ body{background:var(--bg);color:var(--text);font-family:'Lato',sans-serif;font-s
       <div class="gate-msg gate-msg-vol" id="reset-vol" style="display:none">📪 E-mailserver is vandaag vol. Probeer het morgen weer.</div>
       <button class="btn btn-full btn-gold" onclick="doeResetAanvraag()" id="reset-btn">Verstuur resetlink</button>
       <div class="gate-link" onclick="wisselGateTab('login')">← Terug naar inloggen</div>
+    </div>
+
+    <!-- NIEUW WACHTWOORD INSTELLEN (via link uit resetmail) -->
+    <div id="gtab-nieuwwachtwoord" style="display:none">
+      <h2>Nieuw wachtwoord</h2>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.6">Kies een nieuw wachtwoord voor je account.</p>
+      <input type="password" class="gate-field" id="nww-ww" placeholder="Nieuw wachtwoord (min. 6 tekens)" autocomplete="new-password">
+      <input type="password" class="gate-field" id="nww-ww2" placeholder="Herhaal nieuw wachtwoord" autocomplete="new-password">
+      <div class="err" id="nww-err"></div>
+      <button class="btn btn-full btn-gold" onclick="doeNieuwWachtwoord()" id="nww-btn">Wachtwoord instellen</button>
     </div>
   </div>
 </div>
@@ -529,6 +540,7 @@ let alleDeelnemers = []; // alle deelnemers (id, naam, team_id) — voor de tuss
 let voorspelling = null; // eigen rij uit 'voorspellingen'
 let gekozenTeamId = null; // tijdens registratie geselecteerd team
 let teamKeuzeGemaakt = false; // true zodra deelnemer expliciet een team (of 'geen team') heeft aangeklikt
+let herstelToken = null; // { access_token, refresh_token } uit een wachtwoord-resetlink, tot het nieuwe wachtwoord is ingesteld
 
 function hdrs(metAuth){
   const h = { 'apikey': SB_KEY, 'Content-Type': 'application/json' };
@@ -549,6 +561,8 @@ function wisselGateTab(naam){
   document.getElementById('gtab-login').style.display = naam==='login' ? 'block':'none';
   document.getElementById('gtab-registreren').style.display = naam==='registreren' ? 'block':'none';
   document.getElementById('gtab-reset').style.display = naam==='reset' ? 'block':'none';
+  document.getElementById('gtab-nieuwwachtwoord').style.display = naam==='nieuwwachtwoord' ? 'block':'none';
+  document.querySelector('.gate-tabs').style.display = naam==='nieuwwachtwoord' ? 'none':'flex';
   if(naam === 'reset') checkResetKnopBeschikbaar();
 }
 
@@ -621,10 +635,12 @@ async function doeRegistreren(){
   const naam = document.getElementById('reg-naam').value.trim();
   const email = document.getElementById('reg-email').value.trim();
   const ww = document.getElementById('reg-ww').value;
+  const ww2 = document.getElementById('reg-ww2').value;
   const err = document.getElementById('reg-err');
   err.textContent = '';
-  if(!naam || !email || !ww){ err.textContent = 'Vul alle verplichte velden in.'; return; }
+  if(!naam || !email || !ww || !ww2){ err.textContent = 'Vul alle verplichte velden in.'; return; }
   if(ww.length < 6){ err.textContent = 'Wachtwoord moet minimaal 6 tekens zijn.'; return; }
+  if(ww !== ww2){ err.textContent = 'De twee wachtwoorden komen niet overeen.'; return; }
   if(!teamKeuzeGemaakt){ err.textContent = 'Kies een team, of kies expliciet "Geen team".'; return; }
 
   const btn = document.getElementById('reg-btn');
@@ -714,6 +730,61 @@ async function doeResetAanvraag(){
   }finally{
     btn.textContent = 'Verstuur resetlink';
     btn.disabled = bleefVol;
+  }
+}
+
+// ── AUTH-LINK UIT E-MAIL VERWERKEN (reset-wachtwoord, e-mailbevestiging) ──
+// Supabase stuurt bij reset-/bevestigingslinks een tijdelijke sessie mee als
+// URL-fragment (#access_token=...&type=recovery). Zonder dit op te vangen
+// komt iemand na het klikken gewoon weer op het inlogscherm terecht, zonder
+// dat er ooit een nieuw wachtwoord is ingesteld.
+function verwerkAuthHash(){
+  if(!window.location.hash) return null;
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get('access_token');
+  if(!accessToken) return null;
+  const info = { type: params.get('type'), accessToken, refreshToken: params.get('refresh_token') };
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  return info;
+}
+async function haalGebruikerInfo(accessToken){
+  try{
+    const res = await fetch(`${SB_URL}/auth/v1/user`, { headers: { apikey: SB_KEY, Authorization: `Bearer ${accessToken}` } });
+    if(!res.ok) return null;
+    return await res.json();
+  }catch(e){ return null; }
+}
+async function doeNieuwWachtwoord(){
+  const ww = document.getElementById('nww-ww').value;
+  const ww2 = document.getElementById('nww-ww2').value;
+  const err = document.getElementById('nww-err');
+  err.textContent = '';
+  if(!ww || !ww2){ err.textContent = 'Vul beide velden in.'; return; }
+  if(ww.length < 6){ err.textContent = 'Wachtwoord moet minimaal 6 tekens zijn.'; return; }
+  if(ww !== ww2){ err.textContent = 'De twee wachtwoorden komen niet overeen.'; return; }
+  if(!herstelToken){ err.textContent = 'Deze herstel-link is verlopen. Vraag een nieuwe aan via "Wachtwoord vergeten".'; return; }
+
+  const btn = document.getElementById('nww-btn');
+  btn.disabled = true; btn.textContent = 'Bezig...';
+  try{
+    const res = await fetch(`${SB_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: { apikey: SB_KEY, Authorization: `Bearer ${herstelToken.accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: ww })
+    });
+    const data = await res.json();
+    if(!res.ok){ err.textContent = data.error_description || data.msg || 'Wachtwoord instellen mislukt. Vraag eventueel een nieuwe link aan.'; return; }
+
+    const gebruiker = await haalGebruikerInfo(herstelToken.accessToken);
+    sessie = { access_token: herstelToken.accessToken, refresh_token: herstelToken.refreshToken, user: gebruiker || data };
+    localStorage.setItem('fw2026_sessie', JSON.stringify(sessie));
+    herstelToken = null;
+    await startApp();
+    toonToast('Nieuw wachtwoord ingesteld!');
+  }catch(e){
+    err.textContent = 'Netwerkfout, probeer opnieuw.';
+  }finally{
+    btn.disabled = false; btn.textContent = 'Wachtwoord instellen';
   }
 }
 
@@ -1838,6 +1909,24 @@ function mzToggle(){
 (async function init(){
   const mzBox = document.getElementById('muziek-checkbox');
   if(mzBox) mzBox.checked = mzVoorkeurAan();
+
+  const authHash = verwerkAuthHash();
+  if(authHash && authHash.type === 'recovery'){
+    herstelToken = authHash;
+    try{ await laadPubliekeData(); }catch(e){ /* gate moet ook zichtbaar worden als dit faalt */ }
+    document.getElementById('gate-wrap').style.display = 'flex';
+    wisselGateTab('nieuwwachtwoord');
+    return;
+  }
+  if(authHash && authHash.accessToken){
+    // bv. e-mailadres net bevestigd (type=signup) of magic link — meteen inloggen
+    const gebruiker = await haalGebruikerInfo(authHash.accessToken);
+    sessie = { access_token: authHash.accessToken, refresh_token: authHash.refreshToken, user: gebruiker };
+    localStorage.setItem('fw2026_sessie', JSON.stringify(sessie));
+    await startApp();
+    mzProbeerStarten();
+    return;
+  }
 
   const opgeslagen = localStorage.getItem('fw2026_sessie');
   if(opgeslagen){
